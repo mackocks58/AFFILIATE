@@ -9,6 +9,7 @@ import { useAuth } from "@/context/AuthContext";
 import { BETTING_COMPANIES } from "@/lib/companies";
 import { resultSymbol } from "@/lib/stats";
 import { storagePathFromDownloadUrl } from "@/lib/storagePath";
+import { AdminMatches } from "./AdminMatches";
 
 type Row = Betslip & { id: string };
 
@@ -189,95 +190,111 @@ export default function Admin() {
     );
   }
 
+  const [tab, setTab] = useState<"betslips" | "matches">("betslips");
+
   return (
     <Shell>
-      <h1 className="page-title">Admin</h1>
-
-      <div className="split">
-        <div className="card">
-          <div className="card-body">
-            <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Create betslip</h2>
-            {msg && <div className="alert info" style={{ marginBottom: 10 }}>{msg}</div>}
-            {err && <div className="alert" style={{ marginBottom: 10 }}>{err}</div>}
-            <form className="grid" style={{ gap: 12 }} onSubmit={createSlip}>
-              <div className="field">
-                <label>Company</label>
-                <select className="select" value={company} onChange={(e) => setCompany(e.target.value)}>
-                  {BETTING_COMPANIES.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              <div className="field">
-                <label htmlFor="t">Title</label>
-                <input id="t" className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
-              </div>
-              <div className="row" style={{ gap: 12 }}>
-                <div className="field" style={{ flex: 1 }}>
-                  <label htmlFor="cost">Cost</label>
-                  <input id="cost" className="input" inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} required />
-                </div>
-                <div className="field" style={{ width: 140 }}>
-                  <label htmlFor="cur">Currency</label>
-                  <input id="cur" className="input" value={currency} onChange={(e) => setCurrency(e.target.value)} />
-                </div>
-              </div>
-              <div className="field">
-                <label htmlFor="exp">Expiration (local time)</label>
-                <input
-                  id="exp"
-                  className="input"
-                  type="datetime-local"
-                  value={expiresAtLocal}
-                  onChange={(e) => setExpiresAtLocal(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="field">
-                <label htmlFor="img">Betslip image</label>
-                <input id="img" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
-              </div>
-              <div className="field">
-                <label htmlFor="code">Booking code (private)</label>
-                <textarea id="code" className="textarea" value={code} onChange={(e) => setCode(e.target.value)} required />
-              </div>
-              <button className="btn" type="submit" disabled={busy}>
-                {busy ? "Publishing…" : "Publish betslip"}
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div className="card">
-          <div className="card-body" style={{ padding: 0 }}>
-            <table className="table">
-              <thead>
-                <tr>
-                  <th>Betslip</th>
-                  <th>Cost</th>
-                  <th>Expiry</th>
-                  <th>Result</th>
-                  <th />
-                </tr>
-              </thead>
-              <tbody>
-                {list.map((b) => (
-                  <AdminRow key={b.id} slip={b} onDelete={() => void deleteSlip(b.id, b.imageUrl)} onResult={(r) => void updateResult(b.id, r)} onExpiry={(v) => void updateExpiry(b.id, v)} onCost={(v) => void updateCost(b.id, v)} />
-                ))}
-                {!list.length && (
-                  <tr>
-                    <td colSpan={5} className="muted">
-                      No betslips yet.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+      <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h1 className="page-title" style={{ margin: 0 }}>Admin Panel</h1>
+        <div className="row" style={{ gap: 8 }}>
+          <button className={`btn ${tab === "betslips" ? "" : "btn-ghost"}`} onClick={() => setTab("betslips")}>
+            Betslips
+          </button>
+          <button className={`btn ${tab === "matches" ? "" : "btn-ghost"}`} onClick={() => setTab("matches")}>
+            Matches
+          </button>
         </div>
       </div>
+
+      {tab === "betslips" ? (
+        <div className="split">
+          <div className="card">
+            <div className="card-body">
+              <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Create betslip</h2>
+              {msg && <div className="alert info" style={{ marginBottom: 10 }}>{msg}</div>}
+              {err && <div className="alert" style={{ marginBottom: 10 }}>{err}</div>}
+              <form className="grid" style={{ gap: 12 }} onSubmit={createSlip}>
+                <div className="field">
+                  <label>Company</label>
+                  <select className="select" value={company} onChange={(e) => setCompany(e.target.value)}>
+                    {BETTING_COMPANIES.map((c) => (
+                      <option key={c} value={c}>
+                        {c}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="field">
+                  <label htmlFor="t">Title</label>
+                  <input id="t" className="input" value={title} onChange={(e) => setTitle(e.target.value)} required />
+                </div>
+                <div className="row" style={{ gap: 12 }}>
+                  <div className="field" style={{ flex: 1 }}>
+                    <label htmlFor="cost">Cost</label>
+                    <input id="cost" className="input" inputMode="numeric" value={cost} onChange={(e) => setCost(e.target.value)} required />
+                  </div>
+                  <div className="field" style={{ width: 140 }}>
+                    <label htmlFor="cur">Currency</label>
+                    <input id="cur" className="input" value={currency} onChange={(e) => setCurrency(e.target.value)} />
+                  </div>
+                </div>
+                <div className="field">
+                  <label htmlFor="exp">Expiration (local time)</label>
+                  <input
+                    id="exp"
+                    className="input"
+                    type="datetime-local"
+                    value={expiresAtLocal}
+                    onChange={(e) => setExpiresAtLocal(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="field">
+                  <label htmlFor="img">Betslip image</label>
+                  <input id="img" type="file" accept="image/*" onChange={(e) => setFile(e.target.files?.[0] ?? null)} />
+                </div>
+                <div className="field">
+                  <label htmlFor="code">Booking code (private)</label>
+                  <textarea id="code" className="textarea" value={code} onChange={(e) => setCode(e.target.value)} required />
+                </div>
+                <button className="btn" type="submit" disabled={busy}>
+                  {busy ? "Publishing…" : "Publish betslip"}
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <div className="card">
+            <div className="card-body" style={{ padding: 0 }}>
+              <table className="table">
+                <thead>
+                  <tr>
+                    <th>Betslip</th>
+                    <th>Cost</th>
+                    <th>Expiry</th>
+                    <th>Result</th>
+                    <th />
+                  </tr>
+                </thead>
+                <tbody>
+                  {list.map((b) => (
+                    <AdminRow key={b.id} slip={b} onDelete={() => void deleteSlip(b.id, b.imageUrl)} onResult={(r) => void updateResult(b.id, r)} onExpiry={(v) => void updateExpiry(b.id, v)} onCost={(v) => void updateCost(b.id, v)} />
+                  ))}
+                  {!list.length && (
+                    <tr>
+                      <td colSpan={5} className="muted">
+                        No betslips yet.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <AdminMatches />
+      )}
     </Shell>
   );
 }

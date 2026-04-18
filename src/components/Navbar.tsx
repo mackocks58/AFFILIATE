@@ -15,25 +15,6 @@ export function Navbar() {
         <span>Betslips</span>
       </Link>
       <div className="nav-links">
-        <NavLink to="/" className={linkCls} end>
-          Browse
-        </NavLink>
-        {user && (
-          <>
-            <NavLink to="/chat" className={linkCls}>
-              Chat
-            </NavLink>
-            <NavLink to="/payments" className={linkCls}>
-              Payments
-            </NavLink>
-            <NavLink to="/support" className={linkCls}>
-              Support
-            </NavLink>
-            <NavLink to="/account" className={linkCls}>
-              Account
-            </NavLink>
-          </>
-        )}
         {user && isAdmin && (
           <NavLink to="/admin" className={linkCls}>
             Admin

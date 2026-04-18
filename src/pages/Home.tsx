@@ -1,132 +1,109 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/firebase";
-import type { Betslip } from "@/types";
 import { Shell } from "@/components/Shell";
-import { lastFiveStats } from "@/lib/stats";
-import { useCountdown } from "@/hooks/useCountdown";
 
-function CountdownBadge({ expiresAt }: { expiresAt: number }) {
-  const cd = useCountdown(expiresAt);
-  if (cd.expired) return <span className="pill">Expired</span>;
-  let color = "#fde047";
-  let bg = "linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(234, 179, 8, 0.05))";
-  let border = "rgba(250, 204, 21, 0.5)";
-  let shadow = "0 0 12px rgba(250, 204, 21, 0.4)";
-  
-  if (cd.days === 0) {
-    if (cd.hours === 0 && cd.minutes < 15) {
-      color = "#fecdd3";
-      bg = "linear-gradient(135deg, rgba(225, 29, 72, 0.5), rgba(225, 29, 72, 0.2))";
-      border = "rgba(225, 29, 72, 0.8)";
-      shadow = "0 0 16px rgba(225, 29, 72, 0.6)";
-    } else if (cd.hours < 2) {
-      color = "#ffe4e6";
-      bg = "linear-gradient(135deg, rgba(244, 63, 94, 0.3), rgba(244, 63, 94, 0.1))";
-      border = "rgba(244, 63, 94, 0.5)";
-      shadow = "0 0 12px rgba(244, 63, 94, 0.3)";
-    }
-  }
-
-  return (
-    <span className="pill breathe" style={{ color, background: bg, borderColor: border, boxShadow: shadow, fontWeight: 800, transition: "all 1s ease", textShadow: "0 1px 4px rgba(0,0,0,0.8)" }}>
-      {cd.days}d {String(cd.hours).padStart(2, "0")}:{String(cd.minutes).padStart(2, "0")}:
-      {String(cd.seconds).padStart(2, "0")}
-    </span>
-  );
-}
+export type Match = {
+  id: string;
+  homeTeam: string;
+  awayTeam: string;
+  homeLogo: string;
+  awayLogo: string;
+  time: string;
+  league: string;
+  status: string;
+  createdAt: number;
+};
 
 export default function Home() {
-  const [rows, setRows] = useState<Record<string, Betslip> | null>(null);
+  const [rows, setRows] = useState<Record<string, Match> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [params] = useSearchParams();
+  const query = (params.get("q") || "").toLowerCase();
 
   useEffect(() => {
-    const r = ref(db, "betslips");
-    return onValue(r, (snap) => setRows(snap.val() as Record<string, Betslip> | null));
+    const r = ref(db, "matches");
+    return onValue(r, (snap) => {
+      setRows(snap.val() as Record<string, Match> | null);
+      setLoading(false);
+    });
   }, []);
 
-  const { list, stats } = useMemo(() => {
-    const now = Date.now();
-    const all = rows
-      ? Object.entries(rows).map(([id, v]) => ({ id, ...v }))
-      : [];
-    const list = all
-      .filter((b) => Number(b.expiresAt) > now)
-      .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
-    return { list, stats: lastFiveStats(rows) };
-  }, [rows]);
+  const matches = useMemo(() => {
+    if (!rows) return [];
+    let items = Object.entries(rows).map(([id, v]) => ({ ...v, id }));
+    
+    if (query) {
+      items = items.filter(
+        (m) => m.homeTeam.toLowerCase().includes(query) || m.awayTeam.toLowerCase().includes(query) || m.league.toLowerCase().includes(query)
+      );
+    }
+    
+    return items.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+  }, [rows, query]);
 
   return (
     <Shell>
-      <header className="hero">
-        <h1>Premium betslips, unlocked after secure payment.</h1>
-        <p>
-          Each slip has a clear expiry with a live countdown. Pay with Selcom, copy your code instantly, and track your
-          payment history anytime.
-        </p>
-      </header>
+      <div style={{ marginBottom: 24, textAlign: "center" }}>
+        <h1 className="page-title" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
+          <span className="breathe" style={{ display: "inline-block", color: "var(--accent)" }}>⚽</span> Today's Popular Matches
+        </h1>
+        <p className="muted" style={{ margin: 0 }}>Top tier football action happening today.</p>
+      </div>
 
-      <div className="row" style={{ marginBottom: 20, gap: 12 }}>
-        <span className="muted" style={{ fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase", fontSize: 13 }}>Last 5 Results</span>
-        <div className="row" style={{ gap: 8 }} aria-label="Last five betslip results">
-          {stats.length === 0 ? (
-            <span className="muted" style={{ fontSize: 13 }}>No results yet</span>
-          ) : (
-            stats.map((result, i) => (
-              <span key={i} className={`pill ${result === "won" ? "breathe" : ""}`} style={{ 
-                width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
-                background: result === "won" ? "rgba(52, 211, 153, 0.2)" : "rgba(251, 113, 133, 0.15)",
-                borderColor: result === "won" ? "rgba(52, 211, 153, 0.4)" : "rgba(251, 113, 133, 0.3)",
-                color: result === "won" ? "#34d399" : "#fb7185",
-                borderRadius: "50%",
-                boxShadow: result === "won" ? "0 0 12px rgba(52, 211, 153, 0.3)" : "none"
-              }}>
-                {result === "won" ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
-                ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
-                )}
-              </span>
-            ))
-          )}
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 40, color: "var(--accent)" }}>Loading live matches...</div>
+      ) : matches.length === 0 ? (
+        <div className="alert" style={{ textAlign: "center" }}>No matches found. Admins will update the daily matches soon!</div>
+      ) : (
+        <div className="grid cols-2" style={{ gap: 20 }}>
+          {matches.map((m) => (
+            <div key={m.id} className="card" style={{ background: "linear-gradient(135deg, rgba(11, 18, 36, 0.9), rgba(5, 8, 22, 0.95))", border: "1px solid var(--stroke)", transition: "transform 0.3s ease, box-shadow 0.3s ease", cursor: "pointer" }}
+                 onMouseEnter={(e) => { e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 12px 30px rgba(16, 185, 129, 0.2)"; e.currentTarget.style.borderColor = "var(--accent)"; }}
+                 onMouseLeave={(e) => { e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "var(--shadow)"; e.currentTarget.style.borderColor = "var(--stroke)"; }}>
+              <div className="card-body" style={{ display: "flex", flexDirection: "column", alignItems: "center", position: "relative" }}>
+                
+                <div style={{ position: "absolute", top: 12, left: 16, fontSize: 11, fontWeight: 700, color: "var(--muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  {m.league}
+                </div>
+                <div style={{ position: "absolute", top: 12, right: 16 }}>
+                  {m.status.includes("Live") ? (
+                    <span className="breathe" style={{ background: "rgba(251, 113, 133, 0.2)", color: "var(--danger)", padding: "4px 8px", borderRadius: 8, fontSize: 11, fontWeight: 800 }}>{m.status}</span>
+                  ) : (
+                    <span style={{ background: "rgba(16, 185, 129, 0.15)", color: "var(--accent)", padding: "4px 8px", borderRadius: 8, fontSize: 11, fontWeight: 700 }}>{m.time}</span>
+                  )}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginTop: 32, marginBottom: 16 }}>
+                  {/* Home Team */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", marginBottom: 12 }}>
+                      <img src={m.homeLogo} alt={m.homeTeam} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    </div>
+                    <span style={{ fontWeight: 700, textAlign: "center", fontSize: 14 }}>{m.homeTeam}</span>
+                  </div>
+
+                  {/* VS */}
+                  <div style={{ flex: "0 0 50px", textAlign: "center" }}>
+                    <span style={{ fontWeight: 800, fontSize: 20, color: "var(--muted)", background: "rgba(255,255,255,0.05)", padding: "8px 12px", borderRadius: 12 }}>VS</span>
+                  </div>
+
+                  {/* Away Team */}
+                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+                    <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", marginBottom: 12 }}>
+                      <img src={m.awayLogo} alt={m.awayTeam} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
+                    </div>
+                    <span style={{ fontWeight: 700, textAlign: "center", fontSize: 14 }}>{m.awayTeam}</span>
+                  </div>
+                </div>
+
+                <button className="btn" style={{ width: "100%", padding: "10px", fontWeight: 600 }}>View Odds & Premium Tips</button>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
-
-      <div className="grid cols-3">
-        {list.map((b) => (
-          <article key={b.id} className="card">
-            <div style={{ position: "relative", overflow: "hidden" }}>
-              <img className="thumb" src={b.imageUrl} alt="" loading="lazy" style={{ filter: "blur(14px) brightness(0.6)", transform: "scale(1.1)", transition: "all 0.3s ease" }} />
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "rgba(5, 8, 22, 0.3)" }}>
-                <span className="breathe" style={{ fontSize: 36, filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.8))", display: "inline-block" }}>🔒</span>
-                <span className="breathe" style={{ fontWeight: 700, marginTop: 8, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.8)", letterSpacing: "0.05em", display: "inline-block" }}>PREMIUM BETSLIP</span>
-              </div>
-            </div>
-            <div className="card-body">
-              <div className="row" style={{ justifyContent: "space-between" }}>
-                <span className="badge">
-                  <strong>{b.company}</strong>
-                </span>
-                <CountdownBadge expiresAt={Number(b.expiresAt)} />
-              </div>
-              <h3 style={{ marginTop: 12 }}>{b.title}</h3>
-              <p className="muted" style={{ margin: "8px 0 14px" }}>
-                Expires {new Date(Number(b.expiresAt)).toLocaleString()}
-              </p>
-              <div className="row" style={{ justifyContent: "space-between" }}>
-                <span className="pill">
-                  {b.cost} {b.currency}
-                </span>
-                <Link className="btn" to={`/slip/${b.id}`}>
-                  View
-                </Link>
-              </div>
-            </div>
-          </article>
-        ))}
-      </div>
-
-      {!list.length && <p className="muted">No active betslips right now. Check back soon.</p>}
+      )}
     </Shell>
   );
 }

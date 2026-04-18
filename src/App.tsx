@@ -12,6 +12,7 @@ import Chat from "@/pages/Chat";
 import PaymentReturn from "@/pages/PaymentReturn";
 import PaymentCancel from "@/pages/PaymentCancel";
 import Account from "@/pages/Account";
+import Betslips from "@/pages/Betslips";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/support" element={<Support />} />
         <Route path="/account" element={<Account />} />
         <Route path="/chat" element={<Chat />} />
+        <Route path="/betslips" element={<Betslips />} />
         <Route path="/payment/return" element={<PaymentReturn />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route
