@@ -1,0 +1,44 @@
+{
+  "rules": {
+    "betslips": {
+      ".read": true,
+      "$id": {
+        ".write": "auth != null && auth.token.admin === true"
+      }
+    },
+    "betslipCodes": {
+      "$id": {
+        ".read": "auth != null && (auth.token.admin === true || root.child('purchases').child(auth.uid).child($id).child('status').val() === 'completed')",
+        ".write": "auth != null && auth.token.admin === true"
+      }
+    },
+    "purchases": {
+      "$uid": {
+        "$betslipId": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
+    },
+    "checkoutSessions": {
+      ".read": false,
+      ".write": false
+    },
+    "userPayments": {
+      "$uid": {
+        "$paymentId": {
+          ".read": "auth != null && auth.uid === $uid",
+          ".write": false
+        }
+      }
+    },
+    "supportTickets": {
+      "$uid": {
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+        "$ticketId": {
+          ".write": "auth != null && (auth.uid === $uid || auth.token.admin === true)"
+        }
+      }
+    }
+  }
+}
