@@ -12,6 +12,8 @@ export function AdminMatches() {
   const [time, setTime] = useState("");
   const [league, setLeague] = useState("");
   const [status, setStatus] = useState("Upcoming");
+  const [homeScore, setHomeScore] = useState("");
+  const [awayScore, setAwayScore] = useState("");
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
@@ -45,6 +47,8 @@ export function AdminMatches() {
         time: time.trim(),
         league: league.trim(),
         status: status.trim(),
+        homeScore: homeScore ? Number(homeScore) : null,
+        awayScore: awayScore ? Number(awayScore) : null,
         createdAt: Date.now(),
       });
 
@@ -56,6 +60,8 @@ export function AdminMatches() {
       setTime("");
       setLeague("");
       setStatus("Upcoming");
+      setHomeScore("");
+      setAwayScore("");
     } catch (e: unknown) {
       setErr(e instanceof Error ? e.message : "Could not create match.");
     } finally {
@@ -124,9 +130,19 @@ export function AdminMatches() {
                 <input className="input" value={league} onChange={(e) => setLeague(e.target.value)} required />
               </div>
             </div>
-            <div className="field">
-              <label>Status</label>
-              <input className="input" value={status} onChange={(e) => setStatus(e.target.value)} required placeholder="Upcoming, Live - 45', FT" />
+            <div className="row" style={{ gap: 12 }}>
+              <div className="field" style={{ flex: 1 }}>
+                <label>Status</label>
+                <input className="input" value={status} onChange={(e) => setStatus(e.target.value)} required placeholder="Upcoming, Live - 45', FT" />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>Home Score (optional)</label>
+                <input className="input" type="number" value={homeScore} onChange={(e) => setHomeScore(e.target.value)} placeholder="0" />
+              </div>
+              <div className="field" style={{ flex: 1 }}>
+                <label>Away Score (optional)</label>
+                <input className="input" type="number" value={awayScore} onChange={(e) => setAwayScore(e.target.value)} placeholder="0" />
+              </div>
             </div>
             <button className="btn" type="submit" disabled={busy}>
               {busy ? "Publishing…" : "Publish Match"}
@@ -141,6 +157,7 @@ export function AdminMatches() {
             <thead>
               <tr>
                 <th>Match</th>
+                <th>Score</th>
                 <th>Time / Status</th>
                 <th />
               </tr>
@@ -151,6 +168,13 @@ export function AdminMatches() {
                   <td>
                     <div style={{ fontWeight: 650 }}>{m.homeTeam} vs {m.awayTeam}</div>
                     <div className="muted" style={{ fontSize: 12 }}>{m.league}</div>
+                  </td>
+                  <td>
+                    <div className="row" style={{ gap: 4, alignItems: "center" }}>
+                      <input className="input" type="number" style={{ width: 40, padding: 4, textAlign: "center" }} value={m.homeScore ?? ""} onChange={(e) => updateMatchField(m.id, "homeScore", e.target.value === "" ? null : Number(e.target.value))} placeholder="-" />
+                      <span>-</span>
+                      <input className="input" type="number" style={{ width: 40, padding: 4, textAlign: "center" }} value={m.awayScore ?? ""} onChange={(e) => updateMatchField(m.id, "awayScore", e.target.value === "" ? null : Number(e.target.value))} placeholder="-" />
+                    </div>
                   </td>
                   <td>
                     <div className="row" style={{ gap: 8 }}>

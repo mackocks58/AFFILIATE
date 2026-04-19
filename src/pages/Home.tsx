@@ -14,42 +14,111 @@ export type Match = {
   league: string;
   status: string;
   createdAt: number;
+  homeScore: number | null;
+  awayScore: number | null;
 };
 
 export default function Home() {
-  const [rows, setRows] = useState<Record<string, Match> | null>(null);
+  const [firebaseMatches, setFirebaseMatches] = useState<Record<string, Match> | null>(null);
+  const [apiMatches, setApiMatches] = useState<Match[] | null>(null);
   const [loading, setLoading] = useState(true);
   const [params] = useSearchParams();
   const query = (params.get("q") || "").toLowerCase();
+  const [tab, setTab] = useState<"live" | "today" | "tomorrow">("today");
 
   useEffect(() => {
     const r = ref(db, "matches");
-    return onValue(r, (snap) => {
-      setRows(snap.val() as Record<string, Match> | null);
-      setLoading(false);
+    const unsub = onValue(r, (snap) => {
+      setFirebaseMatches(snap.val() as Record<string, Match> | null);
     });
-  }, []);
+
+    async function fetchApiMatches() {
+      setLoading(true);
+      try {
+        const todayStr = new Date().toISOString().split('T')[0];
+        const tomorrowDate = new Date();
+        tomorrowDate.setDate(tomorrowDate.getDate() + 1);
+        const tomorrowStr = tomorrowDate.toISOString().split('T')[0];
+
+        let endpoint = `https://v3.football.api-sports.io/fixtures?date=${todayStr}`;
+        if (tab === "live") endpoint = `https://v3.football.api-sports.io/fixtures?live=all`;
+        if (tab === "tomorrow") endpoint = `https://v3.football.api-sports.io/fixtures?date=${tomorrowStr}`;
+
+        const res = await fetch(endpoint, {
+          headers: { 'x-apisports-key': '5c7ec841c0b922b7deaf823b8880a068' }
+        });
+        const data = await res.json();
+        
+        if (data.errors && Object.keys(data.errors).length > 0) {
+          throw new Error("API Error");
+        }
+        
+        if (data.response && data.response.length > 0) {
+          const topLeagues = [39, 140, 135, 78, 61, 2, 3, 848];
+          let filtered = data.response.filter((m: any) => topLeagues.includes(m.league.id));
+          if (filtered.length === 0) filtered = data.response.slice(0, 15);
+          
+          const formatted: Match[] = filtered.map((m: any) => ({
+            id: String(m.fixture.id),
+            homeTeam: m.teams.home.name,
+            awayTeam: m.teams.away.name,
+            homeLogo: m.teams.home.logo,
+            awayLogo: m.teams.away.logo,
+            time: new Date(m.fixture.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            league: m.league.name,
+            status: m.fixture.status.short === 'NS' ? 'Upcoming' : 
+                    ['1H', '2H', 'HT', 'ET', 'P'].includes(m.fixture.status.short) ? `Live - ${m.fixture.status.elapsed}'` :
+                    ['FT', 'AET', 'PEN'].includes(m.fixture.status.short) ? 'Finished' : m.fixture.status.short,
+            createdAt: m.fixture.timestamp * 1000,
+            homeScore: m.goals?.home ?? null,
+            awayScore: m.goals?.away ?? null
+          }));
+          setApiMatches(formatted);
+        } else {
+          setApiMatches([]);
+        }
+      } catch (e) {
+        console.error(e);
+        setApiMatches(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchApiMatches();
+    
+    return unsub;
+  }, [tab]);
 
   const matches = useMemo(() => {
-    if (!rows) return [];
-    let items = Object.entries(rows).map(([id, v]) => ({ ...v, id }));
+    let baseList: Match[] = [];
+    if (apiMatches && apiMatches.length > 0) {
+      baseList = apiMatches;
+    } else if (firebaseMatches) {
+      baseList = Object.entries(firebaseMatches).map(([id, v]) => ({ ...v, id }));
+      baseList.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
+    }
     
     if (query) {
-      items = items.filter(
+      return baseList.filter(
         (m) => m.homeTeam.toLowerCase().includes(query) || m.awayTeam.toLowerCase().includes(query) || m.league.toLowerCase().includes(query)
       );
     }
-    
-    return items.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
-  }, [rows, query]);
+    return baseList;
+  }, [apiMatches, firebaseMatches, query]);
 
   return (
     <Shell>
       <div style={{ marginBottom: 24, textAlign: "center" }}>
         <h1 className="page-title" style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-          <span className="breathe" style={{ display: "inline-block", color: "var(--accent)" }}>⚽</span> Today's Popular Matches
+          <span className="breathe" style={{ display: "inline-block", color: "var(--accent)" }}>⚽</span> Football Matches
         </h1>
-        <p className="muted" style={{ margin: 0 }}>Top tier football action happening today.</p>
+        <p className="muted" style={{ margin: "0 0 16px 0" }}>Top tier football action.</p>
+        <div className="row" style={{ gap: 8, justifyContent: "center" }}>
+          <button className={`btn ${tab === "live" ? "" : "btn-ghost"}`} onClick={() => setTab("live")} style={{ borderRadius: 999, padding: "8px 20px" }}>Live</button>
+          <button className={`btn ${tab === "today" ? "" : "btn-ghost"}`} onClick={() => setTab("today")} style={{ borderRadius: 999, padding: "8px 20px" }}>Today</button>
+          <button className={`btn ${tab === "tomorrow" ? "" : "btn-ghost"}`} onClick={() => setTab("tomorrow")} style={{ borderRadius: 999, padding: "8px 20px" }}>Tomorrow</button>
+        </div>
       </div>
 
       {loading ? (
@@ -84,9 +153,17 @@ export default function Home() {
                     <span style={{ fontWeight: 700, textAlign: "center", fontSize: 14 }}>{m.homeTeam}</span>
                   </div>
 
-                  {/* VS */}
-                  <div style={{ flex: "0 0 50px", textAlign: "center" }}>
-                    <span style={{ fontWeight: 800, fontSize: 20, color: "var(--muted)", background: "rgba(255,255,255,0.05)", padding: "8px 12px", borderRadius: 12 }}>VS</span>
+                  {/* VS / Score */}
+                  <div style={{ flex: "0 0 70px", textAlign: "center" }}>
+                    {m.homeScore !== null && m.awayScore !== null ? (
+                      <span style={{ fontWeight: 800, fontSize: 24, color: "var(--accent)", background: "rgba(16,185,129,0.1)", padding: "8px 16px", borderRadius: 12 }}>
+                        {m.homeScore} - {m.awayScore}
+                      </span>
+                    ) : (
+                      <span style={{ fontWeight: 800, fontSize: 20, color: "var(--muted)", background: "rgba(255,255,255,0.05)", padding: "8px 12px", borderRadius: 12 }}>
+                        VS
+                      </span>
+                    )}
                   </div>
 
                   {/* Away Team */}
