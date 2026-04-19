@@ -93,7 +93,7 @@ export function GlobalFeatures() {
   // Handle random pop-up ads
   useEffect(() => {
     const scheduleNextAd = () => {
-      const nextDelay = Math.random() * 20000 + 10000;
+      const nextDelay = 180000; // 3 minutes
       return setTimeout(() => {
         const randomAd = adsPool[Math.floor(Math.random() * adsPool.length)];
         setCurrentAd(randomAd);

@@ -153,8 +153,8 @@ textarea {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 14px 18px;
+  gap: 12px;
+  padding: 8px 16px;
   border: 1px solid rgba(250, 204, 21, 0.3);
   border-radius: 999px;
   background: linear-gradient(180deg, rgba(250, 204, 21, 0.08), rgba(11, 18, 36, 0.85));
@@ -175,9 +175,9 @@ textarea {
 }
 
 .brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
+  width: 24px;
+  height: 24px;
+  border-radius: 8px;
   background: conic-gradient(from 210deg, #fef08a, #facc15, #a16207, #fef08a);
   box-shadow: 0 10px 30px rgba(250, 204, 21, 0.35);
   animation: breathe 3s ease-in-out infinite;
@@ -195,7 +195,8 @@ textarea {
 .nav-links button {
   border: 0;
   background: transparent;
-  padding: 8px 12px;
+  padding: 6px 10px;
+  font-size: 14px;
   border-radius: 999px;
   color: var(--muted);
   cursor: pointer;
@@ -482,11 +483,12 @@ textarea {
 
 @media (max-width: 600px) {
   .nav {
-    flex-direction: column;
-    padding: 12px;
+    padding: 8px 12px;
   }
   .nav-links {
-    justify-content: center;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    gap: 4px;
   }
   .shell {
     padding: 16px 12px 80px;
