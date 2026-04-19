@@ -42,3 +42,11 @@ export type SupportTicket = {
   status: "open" | "closed";
   createdAt: number;
 };
+
+export type AppNotification = {
+  id?: string;
+  title: string;
+  message: string;
+  imageUrl?: string;
+  createdAt: number;
+};

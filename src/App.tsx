@@ -13,6 +13,7 @@ import PaymentReturn from "@/pages/PaymentReturn";
 import PaymentCancel from "@/pages/PaymentCancel";
 import Account from "@/pages/Account";
 import Betslips from "@/pages/Betslips";
+import Notifications from "@/pages/Notifications";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 
@@ -43,6 +44,7 @@ export default function App() {
         <Route path="/payments" element={<PaymentHistory />} />
         <Route path="/support" element={<Support />} />
         <Route path="/account" element={<Account />} />
+        <Route path="/notifications" element={<Notifications />} />
         <Route path="/chat" element={<Chat />} />
         <Route path="/betslips" element={<Betslips />} />
         <Route path="/payment/return" element={<PaymentReturn />} />

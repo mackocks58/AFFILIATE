@@ -10,6 +10,7 @@ import { BETTING_COMPANIES } from "@/lib/companies";
 import { resultSymbol } from "@/lib/stats";
 import { storagePathFromDownloadUrl } from "@/lib/storagePath";
 import { AdminMatches } from "./AdminMatches";
+import { AdminNotifications } from "./AdminNotifications";
 
 type Row = Betslip & { id: string };
 
@@ -190,7 +191,7 @@ export default function Admin() {
     );
   }
 
-  const [tab, setTab] = useState<"betslips" | "matches">("betslips");
+  const [tab, setTab] = useState<"betslips" | "matches" | "notifications">("betslips");
 
   return (
     <Shell>
@@ -202,6 +203,9 @@ export default function Admin() {
           </button>
           <button className={`btn ${tab === "matches" ? "" : "btn-ghost"}`} onClick={() => setTab("matches")}>
             Matches
+          </button>
+          <button className={`btn ${tab === "notifications" ? "" : "btn-ghost"}`} onClick={() => setTab("notifications")}>
+            Notifications
           </button>
         </div>
       </div>
@@ -292,8 +296,10 @@ export default function Admin() {
             </div>
           </div>
         </div>
-      ) : (
+      ) : tab === "matches" ? (
         <AdminMatches />
+      ) : (
+        <AdminNotifications />
       )}
     </Shell>
   );

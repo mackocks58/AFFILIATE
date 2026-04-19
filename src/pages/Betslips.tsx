@@ -14,7 +14,7 @@ function CountdownBadge({ expiresAt }: { expiresAt: number }) {
   let bg = "linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(234, 179, 8, 0.05))";
   let border = "rgba(250, 204, 21, 0.5)";
   let shadow = "0 0 12px rgba(250, 204, 21, 0.4)";
-  
+
   if (cd.days === 0) {
     if (cd.hours === 0 && cd.minutes < 15) {
       color = "#fecdd3";
@@ -54,13 +54,13 @@ export default function Betslips() {
       ? Object.entries(rows).map(([id, v]) => ({ id, ...v }))
       : [];
     let items = all.filter((b) => Number(b.expiresAt) > now);
-    
+
     if (query) {
       items = items.filter(
         (b) => b.title.toLowerCase().includes(query) || b.company.toLowerCase().includes(query)
       );
     }
-    
+
     const list = items.sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
     return { list, stats: lastFiveStats(rows) };
   }, [rows, query]);
@@ -68,11 +68,8 @@ export default function Betslips() {
   return (
     <Shell>
       <header className="hero">
-        <h1>Premium betslips, unlocked after secure payment.</h1>
-        <p>
-          Each slip has a clear expiry with a live countdown. Pay with Selcom, copy your code instantly, and track your
-          payment history anytime.
-        </p>
+        <h5>Premium betslips, unlocked after secure payment.</h5>
+
       </header>
 
       <div className="row" style={{ marginBottom: 20, gap: 12 }}>
@@ -82,7 +79,7 @@ export default function Betslips() {
             <span className="muted" style={{ fontSize: 13 }}>No results yet</span>
           ) : (
             stats.map((result, i) => (
-              <span key={i} className={`pill ${result === "won" ? "breathe" : ""}`} style={{ 
+              <span key={i} className={`pill ${result === "won" ? "breathe" : ""}`} style={{
                 width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", padding: 0,
                 background: result === "won" ? "rgba(52, 211, 153, 0.2)" : "rgba(251, 113, 133, 0.15)",
                 borderColor: result === "won" ? "rgba(52, 211, 153, 0.4)" : "rgba(251, 113, 133, 0.3)",
@@ -91,9 +88,9 @@ export default function Betslips() {
                 boxShadow: result === "won" ? "0 0 12px rgba(52, 211, 153, 0.3)" : "none"
               }}>
                 {result === "won" ? (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z" /></svg>
                 ) : (
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z"/></svg>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12 19 6.41z" /></svg>
                 )}
               </span>
             ))
