@@ -48,14 +48,19 @@ export default function PaymentHistory() {
   const { user } = useAuth();
   const [rows, setRows] = useState<Record<string, UserPayment> | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<(UserPayment & { id: string }) | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) {
       setRows(null);
+      setLoading(false);
       return;
     }
     const r = ref(db, `userPayments/${user.uid}`);
-    return onValue(r, (snap) => setRows(snap.val() as Record<string, UserPayment> | null));
+    return onValue(r, (snap) => {
+      setRows(snap.val() as Record<string, UserPayment> | null);
+      setLoading(false);
+    });
   }, [user]);
 
   const list = useMemo(() => {
@@ -64,6 +69,16 @@ export default function PaymentHistory() {
       .map(([id, v]) => ({ id, ...v }))
       .sort((a, b) => Number(b.createdAt) - Number(a.createdAt));
   }, [rows]);
+
+  if (loading) {
+    return (
+      <Shell>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <div style={{ width: 40, height: 40, border: "3px solid rgba(255,255,255,0.1)", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+        </div>
+      </Shell>
+    );
+  }
 
   return (
     <Shell>

@@ -71,14 +71,21 @@ export default function BetslipDetail() {
   const [buyerPhone, setBuyerPhone] = useState("");
   const [payBusy, setPayBusy] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!id) return;
     const r = ref(db, `betslips/${id}`);
     return onValue(
       r,
-      (snap) => setSlip(snap.exists() ? (snap.val() as Betslip) : null),
-      (err) => setLoadError(err.message)
+      (snap) => {
+        setSlip(snap.exists() ? (snap.val() as Betslip) : null);
+        setLoading(false);
+      },
+      (err) => {
+        setLoadError(err.message);
+        setLoading(false);
+      }
     );
   }, [id]);
 
@@ -148,6 +155,16 @@ export default function BetslipDetail() {
     } finally {
       setPayBusy(false);
     }
+  }
+
+  if (loading) {
+    return (
+      <Shell>
+        <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
+          <div style={{ width: 40, height: 40, border: "3px solid rgba(255,255,255,0.1)", borderTopColor: "#3b82f6", borderRadius: "50%", animation: "spin 1s linear infinite" }}></div>
+        </div>
+      </Shell>
+    );
   }
 
   if (!id) {
