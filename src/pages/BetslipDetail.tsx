@@ -139,8 +139,8 @@ export default function BetslipDetail() {
       if (!res.ok) {
         throw new Error(data?.error || "Payment could not be started.");
       }
-      sessionStorage.setItem("selcomOrderId", String(data.orderId));
-      sessionStorage.setItem("selcomBetslipId", id);
+      sessionStorage.setItem("checkoutOrderId", String(data.orderId));
+      sessionStorage.setItem("checkoutBetslipId", id);
       window.location.href = String(data.paymentUrl);
     } catch (e: unknown) {
       setPayError(e instanceof Error ? e.message : "Payment could not be started.");
@@ -250,9 +250,9 @@ export default function BetslipDetail() {
           {user && !unlocked && (
             <div className="card">
               <div className="card-body">
-                <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Pay with Selcom</h2>
+                <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Pay with PalmPesa</h2>
                 <p className="muted" style={{ marginTop: 0 }}>
-                  You will be redirected to Selcom to complete payment. After payment, return here to see your code.
+                  You will be redirected to complete payment. After payment, return here to see your code.
                 </p>
                 {payError && <div className="alert" style={{ marginTop: 12 }}>{payError}</div>}
                 <div className="grid" style={{ gap: 12, marginTop: 12 }}>

@@ -14,8 +14,8 @@ export default function PaymentReturn() {
 
   useEffect(() => {
     if (!user) return;
-    const orderId = sessionStorage.getItem("selcomOrderId");
-    const betslipId = sessionStorage.getItem("selcomBetslipId");
+    const orderId = sessionStorage.getItem("checkoutOrderId");
+    const betslipId = sessionStorage.getItem("checkoutBetslipId");
     if (!orderId) {
       setPhase("missing");
       return;
@@ -27,8 +27,8 @@ export default function PaymentReturn() {
       const v = snap.val() as { status?: string } | null;
       const s = String(v?.status ?? "pending").toLowerCase();
       if (s === "completed") {
-        sessionStorage.removeItem("selcomOrderId");
-        sessionStorage.removeItem("selcomBetslipId");
+        sessionStorage.removeItem("checkoutOrderId");
+        sessionStorage.removeItem("checkoutBetslipId");
         if (betslipId) nav(`/slip/${betslipId}`, { replace: true });
         else nav("/", { replace: true });
       } else if (s === "failed") {
@@ -57,7 +57,7 @@ export default function PaymentReturn() {
         <div className="card">
           <div className="card-body">
             <div className="alert info">
-              Confirming payment with Selcom… If you just completed payment, this should update within a few seconds.
+              Confirming payment… If you just completed payment, this should update within a few seconds.
             </div>
             <p className="muted" style={{ marginTop: 10 }}>
               You can safely open Payment history while you wait.
@@ -77,7 +77,7 @@ export default function PaymentReturn() {
       {user && phase === "failed" && (
         <div className="card">
           <div className="card-body">
-            <div className="alert">Selcom reported a failed payment for this checkout session.</div>
+            <div className="alert">The payment was reported as failed.</div>
             <div className="row" style={{ marginTop: 12 }}>
               <Link className="btn" to="/payments">
                 Payment history

@@ -32,6 +32,7 @@ export type UserPayment = {
   orderId?: string;
   reference?: string;
   selcomTransid?: string;
+  palmpesaTransid?: string;
 };
 
 export type SupportTicket = {

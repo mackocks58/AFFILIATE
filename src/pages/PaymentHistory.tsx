@@ -31,7 +31,7 @@ export default function PaymentHistory() {
       <h1 className="page-title">Payment history</h1>
       {!user && (
         <div className="alert">
-          Log in to see your Selcom payment history. <Link to="/login">Log in</Link>
+          Log in to see your payment history. <Link to="/login">Log in</Link>
         </div>
       )}
 
@@ -66,7 +66,7 @@ export default function PaymentHistory() {
                       )}
                     </td>
                     <td className="mono" style={{ fontSize: 12 }}>
-                      {p.reference || p.selcomTransid || "—"}
+                      {p.reference || p.palmpesaTransid || p.selcomTransid || "—"}
                     </td>
                   </tr>
                 ))}

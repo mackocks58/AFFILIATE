@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { getAdmin } from "./firebaseAdmin.js";
-import { createSelcomOrderMinimal, extractGatewayUrl, isSelcomSuccess } from "./selcom.js";
+import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess } from "./palmpesa.js";
 import crypto from "crypto";
 
 const PORT = Number(process.env.PORT || 8787);
@@ -65,17 +65,17 @@ app.post("/api/checkout/init", async (req, res) => {
       return res.status(400).json({ error: "Already purchased." });
     }
 
-    const vendor = process.env.SELCOM_VENDOR_ID;
-    const apiKey = process.env.SELCOM_API_KEY;
-    const apiSecret = process.env.SELCOM_API_SECRET;
-    if (!vendor || !apiKey || !apiSecret) {
-      return res.status(500).json({ error: "Selcom is not configured on the server." });
+    const apiKey = process.env.PALMPESA_API_KEY;
+    const userId = process.env.PALMPESA_USER_ID;
+    const vendor = process.env.PALMPESA_VENDOR;
+    if (!apiKey || !userId) {
+      return res.status(500).json({ error: "PalmPesa is not configured on the server." });
     }
 
     const publicBase = process.env.PUBLIC_APP_URL || "http://localhost:5173";
     const redirectUrl = `${publicBase.replace(/\/$/, "")}/payment/return`;
     const cancelUrl = `${publicBase.replace(/\/$/, "")}/payment/cancel`;
-    const webhookUrl = `${process.env.SELCOM_WEBHOOK_PUBLIC_URL || publicBase}/api/selcom/webhook`;
+    const webhookUrl = `${process.env.SELCOM_WEBHOOK_PUBLIC_URL || publicBase}/api/palmpesa/webhook`;
 
     const orderId = generateOrderId();
     const amount = Number(slip.cost);
@@ -101,11 +101,10 @@ app.post("/api/checkout/init", async (req, res) => {
       orderId,
     });
 
-    const selcomResp = await createSelcomOrderMinimal({
+    const palmpesaResp = await createPalmpesaOrder({
+      userId,
       vendor,
       apiKey,
-      apiSecret,
-      live: String(process.env.SELCOM_LIVE).toLowerCase() === "true",
       orderId,
       buyerEmail: String(buyer.email).trim(),
       buyerName: String(buyer.name).trim(),
@@ -115,36 +114,30 @@ app.post("/api/checkout/init", async (req, res) => {
       redirectUrl,
       cancelUrl,
       webhookUrl,
-      expiryMinutes: Number(process.env.SELCOM_PAYMENT_EXPIRY_MINUTES || 60),
-      colors: {
-        header: process.env.SELCOM_HEADER_COLOR || "#0b1220",
-        link: process.env.SELCOM_LINK_COLOR || "#7dd3fc",
-        button: process.env.SELCOM_BUTTON_COLOR || "#34d399",
-      },
     });
 
-    if (!isSelcomSuccess(selcomResp)) {
-      await db.ref(`checkoutSessions/${orderId}`).update({ status: "selcom_error", selcom: selcomResp });
+    if (!isPalmpesaSuccess(palmpesaResp)) {
+      await db.ref(`checkoutSessions/${orderId}`).update({ status: "palmpesa_error", palmpesa: palmpesaResp });
       await db.ref(`userPayments/${uid}/${orderId}`).update({
         status: "failed",
         updatedAt: Date.now(),
-        selcom: selcomResp,
+        palmpesa: palmpesaResp,
       });
       return res.status(502).json({
-        error: selcomResp?.message || "Selcom order creation failed.",
-        details: selcomResp,
+        error: palmpesaResp?.message || palmpesaResp?.error || "PalmPesa order creation failed.",
+        details: palmpesaResp,
       });
     }
 
-    const paymentUrl = extractGatewayUrl(selcomResp);
+    const paymentUrl = extractPalmpesaUrl(palmpesaResp);
     if (!paymentUrl) {
-      return res.status(502).json({ error: "Selcom did not return a payment URL.", details: selcomResp });
+      return res.status(502).json({ error: "PalmPesa did not return a payment URL.", details: palmpesaResp });
     }
 
     await db.ref(`checkoutSessions/${orderId}`).update({
       status: "awaiting_payment",
       paymentUrl,
-      selcomReference: selcomResp?.reference ?? null,
+      palmpesaReference: palmpesaResp?.reference ?? null,
     });
 
     res.json({ orderId, paymentUrl });
@@ -154,7 +147,7 @@ app.post("/api/checkout/init", async (req, res) => {
   }
 });
 
-app.post("/api/selcom/webhook", async (req, res) => {
+app.post("/api/palmpesa/webhook", async (req, res) => {
   try {
     const admin = getAdmin();
     const body = req.body || {};
@@ -190,7 +183,7 @@ app.post("/api/selcom/webhook", async (req, res) => {
       updatedAt: Date.now(),
       reference: reference ?? null,
       payment_status: payment_status ?? null,
-      selcomTransid: transid ?? null,
+      palmpesaTransid: transid ?? null,
     });
 
     if (ok) {
