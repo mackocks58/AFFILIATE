@@ -2,7 +2,7 @@ import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import { getAdmin } from "./firebaseAdmin.js";
-import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess } from "./palmpesa.js";
+import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess, checkPalmpesaStatus } from "./palmpesa.js";
 import crypto from "crypto";
 
 const PORT = Number(process.env.PORT || 8787);
@@ -198,6 +198,87 @@ app.post("/api/checkout/init", async (req, res) => {
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e?.message || "Server error" });
+  }
+});
+
+app.get("/api/checkout/status/:orderId", async (req, res) => {
+  try {
+    const admin = getAdmin();
+    const db = admin.database();
+    const actualOrderId = req.params.orderId;
+    
+    let sessionSnap = await db.ref(`checkoutSessions/${actualOrderId}`).get();
+    if (!sessionSnap.exists()) {
+      return res.status(404).json({ error: "Session not found" });
+    }
+    let session = sessionSnap.val();
+
+    // If it's already resolved, just return
+    if (session.status === "completed" || session.status === "failed") {
+      return res.json({ status: session.status, message: "Status is already " + session.status });
+    }
+
+    const apiKey = process.env.PALMPESA_API_KEY;
+    if (!apiKey) return res.status(500).json({ error: "PalmPesa missing API key" });
+
+    // Try to get status from PalmPesa using their order_id
+    const ppOrderId = session.palmpesaReference || actualOrderId;
+    const ppData = await checkPalmpesaStatus({ apiKey, orderId: ppOrderId });
+    
+    console.log("Polling PalmPesa Status for", actualOrderId, ppOrderId, ":", ppData);
+
+    const ok = paymentSuccess(ppData);
+    
+    if (ok) {
+      // It's completed! Update DB just like the webhook.
+      await db.ref(`checkoutSessions/${actualOrderId}`).update({
+        status: "completed",
+        pollAt: Date.now(),
+        raw_poll: ppData
+      });
+
+      if (session.uid) {
+        await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
+          status: "completed",
+          updatedAt: Date.now(),
+        });
+
+        if (session.betslipId) {
+          await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
+            status: "completed",
+            paidAt: Date.now(),
+            amount: session.amount || 0,
+            orderId: actualOrderId,
+          });
+        }
+      }
+      return res.json({ status: "completed", message: "Payment verified successfully via polling." });
+    } else {
+      // Not ok yet. Could be failed or pending.
+      // We don't mark as failed immediately to allow user time to pay.
+      // But if resultcode indicates explicit failure, we could.
+      const statusValue = String(ppData?.payment_status || ppData?.status || "").toUpperCase();
+      if (statusValue === "FAILED" || statusValue === "EXPIRED") {
+        await db.ref(`checkoutSessions/${actualOrderId}`).update({
+          status: "failed",
+          pollAt: Date.now(),
+          raw_poll: ppData
+        });
+        if (session.uid) {
+          await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
+            status: "failed",
+            updatedAt: Date.now(),
+          });
+        }
+        return res.json({ status: "failed", message: "Payment failed according to PalmPesa." });
+      }
+
+      return res.json({ status: "pending", message: "Payment not yet completed.", raw: ppData });
+    }
+
+  } catch (e) {
+    console.error("Polling error:", e);
+    res.status(500).json({ error: "Error checking status" });
   }
 });
 

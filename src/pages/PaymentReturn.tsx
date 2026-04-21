@@ -36,7 +36,22 @@ export default function PaymentReturn() {
       }
     });
 
-    return () => unsub();
+    // Fallback: poll the backend every 5 seconds just in case the webhook is dropped by PalmPesa
+    const interval = setInterval(async () => {
+      try {
+        const base = String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
+        const res = await fetch(`${base}/api/checkout/status/${orderId}`);
+        const data = await res.json();
+        // The backend update will automatically trigger the onValue listener above if it transitions to completed!
+      } catch (e) {
+        // ignore network errors in polling
+      }
+    }, 5000);
+
+    return () => {
+      unsub();
+      clearInterval(interval);
+    };
   }, [user, nav]);
 
   return (

@@ -56,3 +56,20 @@ export function extractPalmpesaUrl(payload) {
   // USSD push does not return a gateway URL
   return null;
 }
+
+export async function checkPalmpesaStatus({ apiKey, orderId }) {
+  const url = "https://palmpesa.drmlelwa.co.tz/api/order-status";
+  const body = { order_id: orderId };
+  
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Accept": "application/json",
+      "Authorization": `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(body),
+  });
+  
+  return await response.json();
+}
