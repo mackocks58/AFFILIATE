@@ -4,6 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import Home from "@/pages/Home";
 import BetslipDetail from "@/pages/BetslipDetail";
 import Login from "@/pages/Login";
+import ForgotPassword from "@/pages/ForgotPassword";
 import Register from "@/pages/Register";
 import Admin from "@/pages/Admin";
 import PaymentHistory from "@/pages/PaymentHistory";
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="/live" element={<LiveMatches />} />
         <Route path="/slip/:id" element={<BetslipDetail />} />
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/register" element={<Register />} />
         <Route path="/payments" element={<PaymentHistory />} />
         <Route path="/support" element={<Support />} />

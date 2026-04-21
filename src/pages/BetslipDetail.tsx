@@ -73,6 +73,18 @@ export default function BetslipDetail() {
   const [payError, setPayError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
+
+  const handleCopy = async (text: string, type: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyStatus(type);
+      setTimeout(() => setCopyStatus(null), 3000);
+    } catch (e) {
+      console.error("Failed to copy", e);
+    }
+  };
+
   useEffect(() => {
     if (!id) return;
     const r = ref(db, `betslips/${id}`);
@@ -297,10 +309,20 @@ export default function BetslipDetail() {
           {user && unlocked && (
             <div className="card">
               <div className="card-body">
-                <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Your unlocked betslip</h2>
-                <p className="muted" style={{ marginTop: 0 }}>
-                  Copy the booking code below. Keep it private.
-                </p>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
+                  <div>
+                    <h2 style={{ margin: 0, fontSize: 18 }}>Your unlocked betslip</h2>
+                    <p className="muted" style={{ margin: "4px 0 0" }}>
+                      Copy the booking code below. Keep it private.
+                    </p>
+                  </div>
+                  {copyStatus && (
+                    <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(16, 185, 129, 0.15)", color: "#10b981", padding: "6px 12px", borderRadius: 20, fontSize: 13, fontWeight: 600, animation: "slideDown 0.3s ease" }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                      Copied Successfully
+                    </div>
+                  )}
+                </div>
                 <div
                   className="mono"
                   style={{
@@ -319,9 +341,8 @@ export default function BetslipDetail() {
                     className="btn btn-ghost"
                     type="button"
                     disabled={!code}
-                    onClick={async () => {
-                      if (!code) return;
-                      await navigator.clipboard.writeText(code);
+                    onClick={() => {
+                      if (code) handleCopy(code, 'code');
                     }}
                   >
                     Copy code
@@ -330,15 +351,20 @@ export default function BetslipDetail() {
                     className="btn btn-ghost"
                     type="button"
                     disabled={!code}
-                    onClick={async () => {
-                      if (!code) return;
-                      await navigator.clipboard.writeText(`${slip.title}\n${code}`);
+                    onClick={() => {
+                      if (code) handleCopy(`${slip.title}\n${code}`, 'titleCode');
                     }}
                   >
                     Copy title + code
                   </button>
                 </div>
               </div>
+              <style>{`
+                @keyframes slideDown {
+                  from { opacity: 0; transform: translateY(-10px); }
+                  to { opacity: 1; transform: translateY(0); }
+                }
+              `}</style>
             </div>
           )}
         </div>
