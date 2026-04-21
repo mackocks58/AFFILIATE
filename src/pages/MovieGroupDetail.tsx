@@ -159,13 +159,13 @@ export default function MovieGroupDetail() {
              </div>
           </div>
           <div style={{ flex: "2 1 400px" }}>
-            <h1 style={{ fontSize: 32, margin: 0, color: unlocked ? "var(--accent)" : "#fef08a" }}>{group.name}</h1>
-            <p className="muted" style={{ fontSize: 16, margin: "8px 0 20px" }}>{group.description}</p>
+            <h1 style={{ fontSize: "clamp(24px, 6vw, 32px)", margin: 0, color: unlocked ? "var(--accent)" : "#fef08a", lineHeight: 1.2 }}>{group.name}</h1>
+            <p className="muted" style={{ fontSize: "clamp(14px, 4vw, 16px)", margin: "8px 0 20px" }}>{group.description}</p>
             {!unlocked && (
               <div className="card" style={{ border: "1px solid #facc15", background: "rgba(250, 204, 21, 0.05)" }}>
-                <div className="card-body">
-                  <h2 style={{ margin: 0, fontSize: 20, color: "#fef08a" }}>Unlock this Group</h2>
-                  <p className="muted" style={{ margin: "4px 0 16px" }}>Pay once to get lifetime access to all movies in this group.</p>
+                <div className="card-body" style={{ padding: "clamp(12px, 4vw, 20px)" }}>
+                  <h2 style={{ margin: 0, fontSize: "clamp(18px, 4vw, 20px)", color: "#fef08a" }}>Unlock this Group</h2>
+                  <p className="muted" style={{ margin: "4px 0 16px", fontSize: 13 }}>Pay once to get lifetime access to all movies in this group.</p>
                   
                   {payError && <div className="alert" style={{ marginBottom: 12 }}>{payError}</div>}
                   
@@ -196,8 +196,8 @@ export default function MovieGroupDetail() {
 
       {unlocked && (
         <div style={{ marginTop: 40 }}>
-          <h2 style={{ marginBottom: 24 }}>Movies in this Group</h2>
-          <div className="grid cols-3" style={{ gap: 20 }}>
+          <h2 style={{ marginBottom: 24, fontSize: "clamp(20px, 4vw, 24px)" }}>Movies in this Group</h2>
+          <div className="grid cols-3 cols-2-mobile" style={{ gap: 16 }}>
             {finalMovies.map((movie, idx) => (
               <div 
                 key={movie.id || idx} 

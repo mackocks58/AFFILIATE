@@ -516,3 +516,21 @@ textarea {
   50% { filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.8)) drop-shadow(0 0 25px rgba(202, 138, 4, 0.5)); }
 }
 
+/* Responsive Utilities for Movies */
+@media (max-width: 600px) {
+  .grid.cols-3-mobile {
+    grid-template-columns: repeat(1, minmax(0, 1fr));
+    gap: 16px;
+  }
+  .grid.cols-2-mobile {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+  .movie-group-card {
+     min-height: 280px;
+  }
+  .movie-group-card h3 {
+     font-size: 16px !important;
+  }
+}
+

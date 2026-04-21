@@ -73,14 +73,14 @@ export default function Movies() {
         <p className="muted" style={{ margin: "8px 0 16px 0" }}>Unlock exclusive movie connections and the latest blockbusters.</p>
       </div>
 
-      <div className="grid cols-3" style={{ gap: 24 }}>
+      <div className="grid cols-3 cols-3-mobile" style={{ gap: 24 }}>
         {groups.map((group) => {
           const unlocked = isPurchased(group.id!);
           return (
             <Link 
               key={group.id} 
               to={`/movies/${group.id}`}
-              className="card" 
+              className="card movie-group-card" 
               style={{ 
                 background: "linear-gradient(135deg, rgba(11, 18, 36, 0.9), rgba(5, 8, 22, 0.95))", 
                 border: "1px solid var(--stroke)", 
