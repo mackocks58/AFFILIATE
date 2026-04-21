@@ -194,7 +194,6 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
       return res.status(400).send("missing ids");
     }
 
-    const db = admin.database();
     const key = orderId || transid;
     let sessionSnap = await db.ref(`checkoutSessions/${key}`).get();
     if (!sessionSnap.exists()) {
