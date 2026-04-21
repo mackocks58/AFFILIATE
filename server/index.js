@@ -28,18 +28,42 @@ function generateOrderId() {
 }
 
 function paymentSuccess(payload) {
-  let status = String(payload?.payment_status ?? "").toUpperCase();
-  let result = String(payload?.result ?? "").toUpperCase();
-  let code = String(payload?.resultcode ?? "");
+  const getVal = (obj, keys) => {
+    if (!obj) return "";
+    for (const key of keys) {
+      if (obj[key] !== undefined && obj[key] !== null) return String(obj[key]).toUpperCase();
+    }
+    return "";
+  };
+
+  const statusKeys = ["payment_status", "status", "state", "payment_state"];
+  const resultKeys = ["result", "result_text", "result_message", "message"];
+  const codeKeys = ["resultcode", "res_code", "result_code", "code", "status_code"];
+
+  let status = getVal(payload, statusKeys);
+  let result = getVal(payload, resultKeys);
+  let code = getVal(payload, codeKeys);
 
   if (payload?.data && Array.isArray(payload.data) && payload.data.length > 0) {
     const item = payload.data[0];
-    if (item.payment_status) status = String(item.payment_status).toUpperCase();
-    if (item.result) result = String(item.result).toUpperCase();
-    if (item.resultcode) code = String(item.resultcode);
+    status = status || getVal(item, statusKeys);
+    result = result || getVal(item, resultKeys);
+    code = code || getVal(item, codeKeys);
   }
 
-  return status === "COMPLETED" || result === "SUCCESS" || code === "000";
+  console.log("Success Check - Status:", status, "Result:", result, "Code:", code);
+
+  const successValues = ["COMPLETED", "SUCCESS", "PAID", "DONE", "OK", "000", "00", "0"];
+  
+  return (
+    successValues.includes(status) ||
+    successValues.includes(result) ||
+    successValues.includes(code) ||
+    status.includes("SUCCESS") ||
+    result.includes("SUCCESS") ||
+    status.includes("COMPLETED") ||
+    result.includes("COMPLETED")
+  );
 }
 
 app.post("/api/checkout/init", async (req, res) => {
@@ -170,78 +194,103 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
   try {
     const admin = getAdmin();
     const body = req.body || {};
-    console.log("Webhook Received:", body);
+    console.log("--- Webhook Received ---");
+    console.log(JSON.stringify(body, null, 2));
 
     const db = admin.database();
     
     // Save the raw webhook to the database for debugging
-    await db.ref(`webhookLogs/${Date.now()}`).set(body);
+    const logId = `log_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    await db.ref(`webhookLogs/${logId}`).set({
+      receivedAt: Date.now(),
+      payload: body
+    });
 
-    let orderId = body.order_id || body.orderId;
-    let transid = body.transid;
-    let reference = body.reference;
-    let payment_status = body.payment_status;
+    let orderId = body.order_id || body.orderId || body.transaction_id || body.transactionId;
+    let transid = body.transid || body.transaction_id;
+    let reference = body.reference || body.ref || body.payment_reference;
+    let payment_status = body.payment_status || body.status;
 
     if (body.data && Array.isArray(body.data) && body.data.length > 0) {
       const item = body.data[0];
-      orderId = orderId || item.order_id || item.orderId;
-      transid = transid || item.transid;
-      reference = reference || item.reference;
-      payment_status = payment_status || item.payment_status;
+      orderId = orderId || item.order_id || item.orderId || item.transaction_id || item.transactionId;
+      transid = transid || item.transid || item.transaction_id;
+      reference = reference || item.reference || item.ref || item.payment_reference;
+      payment_status = payment_status || item.payment_status || item.status;
     }
 
+    console.log("Resolved IDs - orderId:", orderId, "transid:", transid);
+
     if (!orderId && !transid) {
+      console.error("Webhook error: No identifying IDs found in payload.");
       return res.status(400).send("missing ids");
     }
 
-    const key = orderId || transid;
-    let sessionSnap = await db.ref(`checkoutSessions/${key}`).get();
+    const lookupKey = orderId || transid;
+    let sessionSnap = await db.ref(`checkoutSessions/${lookupKey}`).get();
+    
     if (!sessionSnap.exists()) {
+      console.error(`Webhook error: Unknown session for key ${lookupKey}`);
       return res.status(404).send("unknown session");
     }
 
     let session = sessionSnap.val();
-    console.log("Session Found:", session);
+    let actualOrderId = lookupKey;
 
-    let actualOrderId = key;
     if (session.aliasFor) {
       actualOrderId = session.aliasFor;
+      console.log("Alias found. Resolving to actual orderId:", actualOrderId);
       sessionSnap = await db.ref(`checkoutSessions/${actualOrderId}`).get();
+      if (!sessionSnap.exists()) {
+        console.error(`Webhook error: Alias points to non-existent session ${actualOrderId}`);
+        return res.status(404).send("actual session not found");
+      }
       session = sessionSnap.val();
-      console.log("Resolved Actual OrderId:", actualOrderId);
     }
-    const ok = paymentSuccess(body);
-    console.log("Payment Success Check:", ok);
 
-    await db.ref(`checkoutSessions/${actualOrderId}`).update({
+    const ok = paymentSuccess(body);
+    console.log("Payment Success result:", ok);
+
+    const updatePayload = {
       status: ok ? "completed" : "failed",
       webhookAt: Date.now(),
       reference: reference ?? null,
       payment_status: payment_status ?? null,
       transid: transid ?? null,
-    });
+      raw_webhook: body
+    };
 
-    await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
-      status: ok ? "completed" : "failed",
-      updatedAt: Date.now(),
-      reference: reference ?? null,
-      payment_status: payment_status ?? null,
-      palmpesaTransid: transid ?? null,
-    });
+    // Update checkout session
+    await db.ref(`checkoutSessions/${actualOrderId}`).update(updatePayload);
 
-    if (ok) {
-      await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
-        status: "completed",
-        paidAt: Date.now(),
-        amount: session.amount,
-        orderId: actualOrderId,
+    // Update user's payment record if UID is available
+    if (session.uid) {
+      await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
+        status: ok ? "completed" : "failed",
+        updatedAt: Date.now(),
         reference: reference ?? null,
+        payment_status: payment_status ?? null,
+        palmpesaTransid: transid ?? null,
       });
+
+      // If successful, create the purchase record
+      if (ok && session.betslipId) {
+        await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
+          status: "completed",
+          paidAt: Date.now(),
+          amount: session.amount || 0,
+          orderId: actualOrderId,
+          reference: reference ?? null,
+        });
+        console.log(`Purchase completed for user ${session.uid}, betslip ${session.betslipId}`);
+      }
+    } else {
+      console.warn("No UID found in session. Could not update userPayments or purchases.");
     }
 
     return res.status(200).send("ok");
   } catch (e) {
-    console.error(e);
+    console.error("Webhook processing error:", e);
     return res.status(500).send("error");
   }
 });
