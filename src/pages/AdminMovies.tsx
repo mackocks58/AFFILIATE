@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { onValue, push, ref, remove, set, update } from "firebase/database";
-import { db } from "@/firebase";
+import { ref as sRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
+import { db, storage } from "@/firebase";
 import type { Movie, MovieGroup } from "@/types";
 
 export function AdminMovies() {
@@ -8,15 +9,17 @@ export function AdminMovies() {
   const [movies, setMovies] = useState<Record<string, Movie> | null>(null);
   
   const [gName, setGName] = useState("");
-  const [gThumb, setGThumb] = useState("");
+  const [gThumbFile, setGThumbFile] = useState<File | null>(null);
   const [gAmount, setGAmount] = useState("1000");
   const [gDesc, setGDesc] = useState("");
   
   const [mTitle, setMTitle] = useState("");
   const [mYoutube, setMYoutube] = useState("");
+  const [mFile, setMFile] = useState<File | null>(null);
   const [mGroup, setMGroup] = useState("");
   
   const [busy, setBusy] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -32,18 +35,28 @@ export function AdminMovies() {
     e.preventDefault();
     setBusy(true); setErr(null); setMsg(null);
     try {
+      let thumbnail = "";
+      if (gThumbFile) {
+        const reader = new FileReader();
+        thumbnail = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("Failed to read image"));
+          reader.readAsDataURL(gThumbFile);
+        });
+      }
+
       const key = push(ref(db, "movieGroups")).key;
       if (!key) throw new Error("Failed to allocate key.");
       await set(ref(db, `movieGroups/${key}`), {
         name: gName,
-        thumbnail: gThumb,
+        thumbnail,
         amount: Number(gAmount),
         currency: "TZS",
         description: gDesc,
         createdAt: Date.now()
       });
       setMsg("Group created.");
-      setGName(""); setGThumb(""); setGDesc("");
+      setGName(""); setGThumbFile(null); setGDesc("");
     } catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
   }
@@ -51,18 +64,42 @@ export function AdminMovies() {
   async function addMovie(e: React.FormEvent) {
     e.preventDefault();
     if (!mGroup) { setErr("Select a group first."); return; }
+    if (!mYoutube && !mFile) { setErr("Provide a YouTube ID or upload a video file."); return; }
+
     setBusy(true); setErr(null); setMsg(null);
+    setUploadProgress(0);
+
     try {
+      let videoUrl = "";
+      if (mFile) {
+        const fileRef = sRef(storage, `movies/${Date.now()}_${mFile.name}`);
+        const uploadTask = uploadBytesResumable(fileRef, mFile);
+        
+        videoUrl = await new Promise((resolve, reject) => {
+          uploadTask.on('state_changed', 
+            (snapshot) => {
+              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+              setUploadProgress(progress);
+            }, 
+            (error) => reject(error), 
+            () => {
+              getDownloadURL(uploadTask.snapshot.ref).then(resolve);
+            }
+          );
+        });
+      }
+
       const key = push(ref(db, "movies")).key;
       await set(ref(db, `movies/${key}`), {
         title: mTitle,
-        youtubeId: mYoutube,
+        youtubeId: mYoutube || null,
+        videoUrl: videoUrl || null,
         groupId: mGroup,
         createdAt: Date.now()
       });
-      setMsg("Movie added.");
-      setMTitle(""); setMYoutube("");
-    } catch (e: any) { setErr(e.message); }
+      setMsg("Movie added successfully.");
+      setMTitle(""); setMYoutube(""); setMFile(null); setUploadProgress(null);
+    } catch (e: any) { setErr(e.message); setUploadProgress(null); }
     finally { setBusy(false); }
   }
 
@@ -94,8 +131,9 @@ export function AdminMovies() {
                 <input className="input" value={gName} onChange={e => setGName(e.target.value)} required placeholder="e.g. Bongo Connection" />
               </div>
               <div className="field">
-                <label>Thumbnail URL</label>
-                <input className="input" value={gThumb} onChange={e => setGThumb(e.target.value)} required placeholder="https://..." />
+                <label>Group Thumbnail</label>
+                <input type="file" accept="image/*" onChange={e => setGThumbFile(e.target.files?.[0] ?? null)} required />
+                <p className="muted" style={{ fontSize: 11, marginTop: 4 }}>This image will represent the movie category.</p>
               </div>
               <div className="field">
                 <label>Amount (TZS)</label>
@@ -124,10 +162,22 @@ export function AdminMovies() {
                 <input className="input" value={mTitle} onChange={e => setMTitle(e.target.value)} required />
               </div>
               <div className="field">
-                <label>YouTube ID</label>
-                <input className="input" value={mYoutube} onChange={e => setMYoutube(e.target.value)} required placeholder="e.g. dQw4w9WgXcQ" />
+                <label>Source: YouTube ID</label>
+                <input className="input" value={mYoutube} onChange={e => setMYoutube(e.target.value)} placeholder="e.g. dQw4w9WgXcQ" />
               </div>
-              <button className="btn" type="submit" disabled={busy}>Add Movie</button>
+              <div style={{ textAlign: "center", color: "var(--muted)", fontSize: 12 }}>- OR -</div>
+              <div className="field">
+                <label>Source: Upload Video File</label>
+                <input type="file" accept="video/*" onChange={e => setMFile(e.target.files?.[0] ?? null)} />
+                {uploadProgress !== null && (
+                  <div style={{ marginTop: 8, height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${uploadProgress}%`, background: "var(--accent)", transition: "width 0.3s" }}></div>
+                  </div>
+                )}
+              </div>
+              <button className="btn" type="submit" disabled={busy}>
+                {busy ? (uploadProgress !== null ? `Uploading ${Math.round(uploadProgress)}%...` : "Processing...") : "Add Movie"}
+              </button>
             </form>
           </div>
         </div>
@@ -148,7 +198,12 @@ export function AdminMovies() {
                <tbody>
                  {groupList.map(g => (
                    <tr key={g.id} style={{ background: "rgba(255,255,255,0.03)" }}>
-                     <td><strong>📁 {g.name}</strong></td>
+                     <td>
+                        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                           <img src={g.thumbnail} style={{ width: 40, height: 40, borderRadius: 4, objectFit: "cover" }} />
+                           <strong>{g.name}</strong>
+                        </div>
+                     </td>
                      <td>{g.amount} TZS</td>
                      <td><button className="btn btn-danger btn-sm" onClick={() => deleteGroup(g.id)}>Delete</button></td>
                    </tr>
@@ -156,7 +211,7 @@ export function AdminMovies() {
                  {movieList.map(m => (
                    <tr key={m.id}>
                      <td style={{ paddingLeft: 32 }}>🎬 {m.title}</td>
-                     <td>{groupList.find(g => g.id === m.groupId)?.name || "Unknown"}</td>
+                     <td style={{ fontSize: 11 }}>{m.youtubeId ? "YouTube" : "Uploaded File"}</td>
                      <td><button className="btn btn-danger btn-sm" onClick={() => deleteMovie(m.id)}>Delete</button></td>
                    </tr>
                  ))}

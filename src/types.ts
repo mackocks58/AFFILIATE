@@ -66,7 +66,8 @@ export type Movie = {
   id?: string;
   groupId: string;
   title: string;
-  youtubeId: string;
+  youtubeId?: string;
+  videoUrl?: string;
   duration?: string;
   createdAt: number;
 };

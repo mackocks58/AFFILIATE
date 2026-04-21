@@ -202,19 +202,26 @@ export default function MovieGroupDetail() {
               <div 
                 key={movie.id || idx} 
                 className="card" 
-                style={{ cursor: "pointer", border: "1px solid var(--stroke)" }}
+                style={{ cursor: "pointer", border: "1px solid var(--stroke)", overflow: "hidden" }}
                 onClick={() => setActiveMovie(movie)}
               >
-                <div style={{ position: "relative", paddingTop: "56.25%" }}>
-                  <img src={`https://img.youtube.com/vi/${movie.youtubeId}/hqdefault.jpg`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                <div style={{ position: "relative", paddingTop: "56.25%", background: "#111" }}>
+                  {movie.youtubeId ? (
+                    <img src={`https://img.youtube.com/vi/${movie.youtubeId}/hqdefault.jpg`} style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", objectFit: "cover" }} />
+                  ) : (
+                    <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", background: "linear-gradient(45deg, #050816, #1a1a1a)" }}>
+                       <span style={{ fontSize: 32 }}>🎞️</span>
+                    </div>
+                  )}
                   <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", background: "rgba(0,0,0,0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: 40, height: 40, borderRadius: "50%", background: "var(--accent)", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 0 15px rgba(16, 185, 129, 0.4)" }}>
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="white"><path d="M8 5v14l11-7z"/></svg>
                     </div>
                   </div>
                 </div>
-                <div className="card-body">
-                  <h3 style={{ fontSize: 16, margin: 0 }}>{movie.title}</h3>
+                <div className="card-body" style={{ padding: 12 }}>
+                  <h3 style={{ fontSize: 14, margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{movie.title}</h3>
+                  {!movie.youtubeId && <div style={{ fontSize: 10, color: "var(--accent)", marginTop: 4, fontWeight: 700 }}>PREMIUM UPLOAD</div>}
                 </div>
               </div>
             ))}
@@ -233,12 +240,21 @@ export default function MovieGroupDetail() {
               style={{ position: "absolute", top: -40, right: 0, background: "none", border: "none", color: "#fff", fontSize: 24, cursor: "pointer" }}
             >✕ Close</button>
             <div style={{ position: "relative", paddingTop: "56.25%", background: "#000", borderRadius: 16, overflow: "hidden", border: "1px solid var(--stroke)" }}>
-              <iframe 
-                src={`https://www.youtube.com/embed/${activeMovie.youtubeId}?autoplay=1`}
-                style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
-                frameBorder="0"
-                allowFullScreen
-              />
+              {activeMovie.videoUrl ? (
+                <video 
+                  src={activeMovie.videoUrl} 
+                  controls 
+                  autoPlay 
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }} 
+                />
+              ) : (
+                <iframe 
+                  src={`https://www.youtube.com/embed/${activeMovie.youtubeId}?autoplay=1`}
+                  style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%" }}
+                  frameBorder="0"
+                  allowFullScreen
+                />
+              )}
             </div>
             <h2 style={{ marginTop: 16, color: "#fff" }}>{activeMovie.title}</h2>
           </div>
