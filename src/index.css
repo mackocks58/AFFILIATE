@@ -494,3 +494,25 @@ textarea {
     padding: 16px 12px 80px;
   }
 }
+
+.brand-text-zyntra {
+  font-weight: 900;
+  background: linear-gradient(to right, #fef08a, #facc15, #ca8a04, #fef08a);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: zyntra-shine 3s linear infinite, zyntra-glow 3s ease-in-out infinite;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: inline-block;
+}
+
+@keyframes zyntra-shine {
+  to { background-position: 200% center; }
+}
+
+@keyframes zyntra-glow {
+  0%, 100% { filter: drop-shadow(0 0 8px rgba(250, 204, 21, 0.4)) drop-shadow(0 0 12px rgba(202, 138, 4, 0.2)); }
+  50% { filter: drop-shadow(0 0 15px rgba(250, 204, 21, 0.8)) drop-shadow(0 0 25px rgba(202, 138, 4, 0.5)); }
+}
+

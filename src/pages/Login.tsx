@@ -37,8 +37,11 @@ export default function Login() {
               <div className="breathe" style={{ width: 64, height: 64, margin: "0 auto 16px", borderRadius: 16, background: "conic-gradient(from 210deg, #fef08a, #facc15, #a16207, #fef08a)", boxShadow: "0 10px 30px rgba(250, 204, 21, 0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#050816" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path><polyline points="10 17 15 12 10 7"></polyline><line x1="15" y1="12" x2="3" y2="12"></line></svg>
               </div>
-              <h1 style={{ margin: 0, background: "linear-gradient(to right, #fef08a, #facc15)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 32, letterSpacing: "-0.02em" }}>Welcome Back</h1>
-              <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 15 }}>Sign in to access your premium betslips.</p>
+              <div style={{ marginBottom: 12 }}>
+                <span className="brand-text-zyntra" style={{ fontSize: 42 }}>Zyntra</span>
+              </div>
+              <h1 style={{ margin: 0, background: "linear-gradient(to right, #fef08a, #facc15)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 24, letterSpacing: "-0.02em" }}>Welcome Back</h1>
+              <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 15 }}>Sign in to access your premium picks.</p>
             </div>
 
             {error && <div className="alert" style={{ marginBottom: 20 }}>{error}</div>}

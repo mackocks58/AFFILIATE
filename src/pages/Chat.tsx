@@ -187,9 +187,29 @@ export default function Chat() {
         </div>
       </div>
 
-      <div className="split" style={{ gridTemplateColumns: "250px 1fr", gap: 16 }}>
+      <style>{`
+        .chat-layout {
+          display: grid;
+          grid-template-columns: 250px 1fr;
+          gap: 16px;
+        }
+        @media (max-width: 860px) {
+          .chat-layout {
+            grid-template-columns: 1fr;
+          }
+          .chat-sidebar {
+            height: auto !important;
+            max-height: 25vh;
+          }
+          .chat-main {
+            height: 65vh !important;
+          }
+        }
+      `}</style>
+
+      <div className="chat-layout">
         {/* Sidebar */}
-        <div className="card" style={{ height: "65vh", display: "flex", flexDirection: "column" }}>
+        <div className="card chat-sidebar" style={{ height: "70vh", display: "flex", flexDirection: "column" }}>
           <div className="card-body" style={{ flex: 1, overflowY: "auto", padding: "16px 10px" }}>
             <h3 style={{ fontSize: 14, textTransform: "uppercase", color: "var(--muted)", margin: "0 0 12px 6px" }}>Channels</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -239,7 +259,7 @@ export default function Chat() {
         </div>
 
         {/* Chat Area */}
-        <div className="card" style={{ display: "flex", flexDirection: "column", height: "65vh" }}>
+        <div className="card chat-main" style={{ display: "flex", flexDirection: "column", height: "70vh" }}>
           {/* Header */}
           <div style={{ padding: "12px 16px", borderBottom: "1px solid var(--stroke)", background: "rgba(5,8,22,0.4)" }}>
             <h2 style={{ margin: 0, fontSize: 18 }}># {channels.find(c => c.id === activeChannelId)?.name || "Chat"}</h2>

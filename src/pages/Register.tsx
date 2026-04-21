@@ -1,14 +1,17 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
-import { auth } from "@/firebase";
+import { ref, set } from "firebase/database";
+import { auth, db } from "@/firebase";
 import { Shell } from "@/components/Shell";
 
 export default function Register() {
   const nav = useNavigate();
+  const [params] = useSearchParams();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [referralCode, setReferralCode] = useState(params.get("ref") || "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -21,6 +24,24 @@ export default function Register() {
       const parts = name.trim().split(/\s+/);
       const displayName = parts.length >= 2 ? name.trim() : `${name.trim()} User`;
       await updateProfile(cred.user, { displayName });
+      
+      const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
+      
+      await set(ref(db, `users/${cred.user.uid}`), {
+        displayName,
+        email: email.trim(),
+        affiliateCode: newCode,
+        referredBy: referralCode.trim() || null,
+        createdAt: Date.now()
+      });
+
+      if (referralCode.trim()) {
+        await set(ref(db, `referrals/${referralCode.trim()}/${cred.user.uid}`), {
+          displayName,
+          createdAt: Date.now()
+        });
+      }
+
       nav("/");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not register.");
@@ -41,7 +62,10 @@ export default function Register() {
               <div className="breathe" style={{ width: 64, height: 64, margin: "0 auto 16px", borderRadius: 16, background: "conic-gradient(from 210deg, #fef08a, #facc15, #a16207, #fef08a)", boxShadow: "0 10px 30px rgba(250, 204, 21, 0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#050816" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
               </div>
-              <h1 style={{ margin: 0, background: "linear-gradient(to right, #fef08a, #facc15)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 32, letterSpacing: "-0.02em" }}>Create Account</h1>
+              <div style={{ marginBottom: 12 }}>
+                <span className="brand-text-zyntra" style={{ fontSize: 42 }}>Zyntra</span>
+              </div>
+              <h1 style={{ margin: 0, background: "linear-gradient(to right, #fef08a, #facc15)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 24, letterSpacing: "-0.02em" }}>Create Account</h1>
               <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 15 }}>Join us to get the best premium picks.</p>
             </div>
 
@@ -85,6 +109,17 @@ export default function Register() {
                   minLength={6}
                   style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px" }}
                   required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="referralCode" style={{ color: "#fef08a", opacity: 0.9 }}>Referral Code <span style={{opacity:0.5, fontSize:11}}>(Optional)</span></label>
+                <input
+                  id="referralCode"
+                  className="input mono"
+                  value={referralCode}
+                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. A1B2C3"
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px", textTransform: "uppercase" }}
                 />
               </div>
               <button className="btn breathe" type="submit" disabled={busy} style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(250,204,21,0.5)", color: "#fef08a", fontWeight: 700, padding: "16px", marginTop: "8px", boxShadow: "0 0 20px rgba(250, 204, 21, 0.15)", fontSize: 16 }}>

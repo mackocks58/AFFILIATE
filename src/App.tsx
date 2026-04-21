@@ -14,6 +14,9 @@ import PaymentCancel from "@/pages/PaymentCancel";
 import Account from "@/pages/Account";
 import Betslips from "@/pages/Betslips";
 import Notifications from "@/pages/Notifications";
+import Movies from "@/pages/Movies";
+import Affiliate from "@/pages/Affiliate";
+import LiveMatches from "@/pages/LiveMatches";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 
@@ -38,6 +41,8 @@ export default function App() {
       <GlobalFeatures />
       <Routes>
         <Route path="/" element={<Home />} />
+        <Route path="/affiliate" element={<Affiliate />} />
+        <Route path="/live" element={<LiveMatches />} />
         <Route path="/slip/:id" element={<BetslipDetail />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
@@ -49,6 +54,7 @@ export default function App() {
         <Route path="/betslips" element={<Betslips />} />
         <Route path="/payment/return" element={<PaymentReturn />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
+        <Route path="/movies" element={<Movies />} />
         <Route
           path="/admin"
           element={

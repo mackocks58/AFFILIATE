@@ -3,6 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/firebase";
 import { Shell } from "@/components/Shell";
+import { TeamDetailsModal } from "@/components/TeamDetailsModal";
 
 export type Match = {
   id: string;
@@ -16,6 +17,10 @@ export type Match = {
   createdAt: number;
   homeScore: number | null;
   awayScore: number | null;
+  homeTeamId?: number;
+  awayTeamId?: number;
+  leagueId?: number;
+  season?: number;
 };
 
 export default function Home() {
@@ -25,6 +30,7 @@ export default function Home() {
   const [params] = useSearchParams();
   const query = (params.get("q") || "").toLowerCase();
   const [tab, setTab] = useState<"live" | "today" | "tomorrow">("today");
+  const [activeTeamDetails, setActiveTeamDetails] = useState<{ teamId: number, fixtureId: string, leagueId: number, season: number, teamName: string, teamLogo: string } | null>(null);
 
   useEffect(() => {
     const r = ref(db, "matches");
@@ -71,7 +77,11 @@ export default function Home() {
                     ['FT', 'AET', 'PEN'].includes(m.fixture.status.short) ? 'Finished' : m.fixture.status.short,
             createdAt: m.fixture.timestamp * 1000,
             homeScore: m.goals?.home ?? null,
-            awayScore: m.goals?.away ?? null
+            awayScore: m.goals?.away ?? null,
+            homeTeamId: m.teams.home.id,
+            awayTeamId: m.teams.away.id,
+            leagueId: m.league.id,
+            season: m.league.season
           }));
           setApiMatches(formatted);
         } else {
@@ -146,7 +156,16 @@ export default function Home() {
 
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%", marginTop: 32, marginBottom: 16 }}>
                   {/* Home Team */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+                  <div 
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, cursor: m.homeTeamId ? "pointer" : "default", transition: "transform 0.2s" }}
+                    onClick={(e) => {
+                      if (!m.homeTeamId || !m.leagueId || !m.season) return;
+                      e.stopPropagation();
+                      setActiveTeamDetails({ teamId: m.homeTeamId, fixtureId: m.id, leagueId: m.leagueId, season: m.season, teamName: m.homeTeam, teamLogo: m.homeLogo });
+                    }}
+                    onMouseEnter={(e) => { if (m.homeTeamId) e.currentTarget.style.transform = "scale(1.1)"; }}
+                    onMouseLeave={(e) => { if (m.homeTeamId) e.currentTarget.style.transform = "none"; }}
+                  >
                     <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", marginBottom: 12 }}>
                       <img src={m.homeLogo} alt={m.homeTeam} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                     </div>
@@ -167,7 +186,16 @@ export default function Home() {
                   </div>
 
                   {/* Away Team */}
-                  <div style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1 }}>
+                  <div 
+                    style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, cursor: m.awayTeamId ? "pointer" : "default", transition: "transform 0.2s" }}
+                    onClick={(e) => {
+                      if (!m.awayTeamId || !m.leagueId || !m.season) return;
+                      e.stopPropagation();
+                      setActiveTeamDetails({ teamId: m.awayTeamId, fixtureId: m.id, leagueId: m.leagueId, season: m.season, teamName: m.awayTeam, teamLogo: m.awayLogo });
+                    }}
+                    onMouseEnter={(e) => { if (m.awayTeamId) e.currentTarget.style.transform = "scale(1.1)"; }}
+                    onMouseLeave={(e) => { if (m.awayTeamId) e.currentTarget.style.transform = "none"; }}
+                  >
                     <div style={{ width: 64, height: 64, borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", padding: 8, boxShadow: "0 8px 24px rgba(0,0,0,0.5)", marginBottom: 12 }}>
                       <img src={m.awayLogo} alt={m.awayTeam} style={{ width: "100%", height: "100%", objectFit: "contain" }} />
                     </div>
@@ -180,6 +208,13 @@ export default function Home() {
             </div>
           ))}
         </div>
+      )}
+      
+      {activeTeamDetails && (
+        <TeamDetailsModal 
+          {...activeTeamDetails} 
+          onClose={() => setActiveTeamDetails(null)} 
+        />
       )}
     </Shell>
   );

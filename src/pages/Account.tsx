@@ -132,6 +132,34 @@ export default function Account() {
               </div>
             </div>
           </div>
+
+          <div className="card" style={{ background: "linear-gradient(135deg, rgba(250, 204, 21, 0.1), rgba(17, 27, 51, 0.8))", borderColor: "rgba(250, 204, 21, 0.2)" }}>
+            <div className="card-body">
+              <h2 style={{ margin: "0 0 16px", fontSize: 18, display: "flex", alignItems: "center", gap: 8, color: "#fef08a" }}>
+                <span>✨</span> Affiliate Program
+              </h2>
+              <p className="muted" style={{ marginBottom: 16, fontSize: 14 }}>
+                Invite your friends to Zyntra and earn commissions for every successful registration!
+              </p>
+              <Link to="/affiliate" className="btn" style={{ display: "block", textAlign: "center", background: "linear-gradient(135deg, rgba(250,204,21,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(250,204,21,0.5)", color: "#fef08a", fontWeight: 700, padding: "12px" }}>
+                Open Affiliate Dashboard
+              </Link>
+            </div>
+          </div>
+
+          <div className="card" style={{ background: "linear-gradient(135deg, rgba(56, 189, 248, 0.1), rgba(17, 27, 51, 0.8))", borderColor: "rgba(56, 189, 248, 0.2)" }}>
+            <div className="card-body">
+              <h2 style={{ margin: "0 0 16px", fontSize: 18, display: "flex", alignItems: "center", gap: 8 }}>
+                <span className="breathe" style={{ width: 10, height: 10, borderRadius: "50%", background: "var(--danger)" }}></span> Live Center
+              </h2>
+              <p className="muted" style={{ marginBottom: 16, fontSize: 14 }}>
+                Track live matches with our real-time visual simulation and live score tracker.
+              </p>
+              <Link to="/live" className="btn" style={{ display: "block", textAlign: "center", background: "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(12,74,110,0.3))", borderColor: "rgba(56,189,248,0.5)", color: "var(--accent)", fontWeight: 700, padding: "12px" }}>
+                Enter Live Center
+              </Link>
+            </div>
+          </div>
         </div>
       </div>
     </Shell>

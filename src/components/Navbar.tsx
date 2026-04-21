@@ -54,9 +54,12 @@ export function Navbar() {
     <nav className="nav">
       <Link to="/" className="brand">
         <span className="brand-mark" aria-hidden />
-        <span>Betslips</span>
+        <span className="brand-text-zyntra">Zyntra</span>
       </Link>
       <div className="nav-links">
+        <NavLink to="/movies" className={linkCls}>
+          Movies
+        </NavLink>
         {user && isAdmin && (
           <NavLink to="/admin" className={linkCls}>
             Admin
