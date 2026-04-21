@@ -172,6 +172,11 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
     const body = req.body || {};
     console.log("Webhook Received:", body);
 
+    const db = admin.database();
+    
+    // Save the raw webhook to the database for debugging
+    await db.ref(`webhookLogs/${Date.now()}`).set(body);
+
     let orderId = body.order_id || body.orderId;
     let transid = body.transid;
     let reference = body.reference;
