@@ -36,40 +36,37 @@ function generateOrderId() {
 }
 
 function paymentSuccess(payload) {
-  const getVal = (obj, keys) => {
-    if (!obj) return "";
-    for (const key of keys) {
-      if (obj[key] !== undefined && obj[key] !== null) return String(obj[key]).toUpperCase();
-    }
-    return "";
-  };
+  if (!payload) return false;
 
-  const statusKeys = ["payment_status", "status", "state", "payment_state"];
-  const resultKeys = ["result", "result_text", "result_message", "message"];
-  const codeKeys = ["resultcode", "res_code", "result_code", "code", "status_code"];
-
-  let status = getVal(payload, statusKeys);
-  let result = getVal(payload, resultKeys);
-  let code = getVal(payload, codeKeys);
-
-  if (payload?.data && Array.isArray(payload.data) && payload.data.length > 0) {
-    const item = payload.data[0];
-    status = status || getVal(item, statusKeys);
-    result = result || getVal(item, resultKeys);
-    code = code || getVal(item, codeKeys);
+  // Extract payment status directly from payload or payload.data[0]
+  let pStatus = payload.payment_status || payload.status || payload.state || payload.payment_state;
+  if (payload.data && Array.isArray(payload.data) && payload.data.length > 0) {
+    pStatus = pStatus || payload.data[0].payment_status || payload.data[0].status;
   }
 
-  console.log("Success Check - Status:", status, "Result:", result, "Code:", code);
+  pStatus = String(pStatus || "").toUpperCase();
+
+  // If a definitive payment status exists, we MUST evaluate based on it alone.
+  // We cannot use API response "resultcode: 000" because that just means the API call succeeded.
+  if (pStatus) {
+    if (["COMPLETED", "SUCCESS", "PAID", "DONE"].includes(pStatus)) {
+      return true;
+    }
+    // If it's PENDING, FAILED, EXPIRED, etc., the payment is NOT successful yet.
+    return false;
+  }
+
+  // Fallback for unexpected payloads: check if result/resultcode indicates success
+  // This is risky but kept as an absolute last resort if payment_status is completely missing.
+  const result = String(payload.result || payload.result_message || payload.message || "").toUpperCase();
+  const code = String(payload.resultcode || payload.res_code || payload.code || "").toUpperCase();
 
   const successValues = ["COMPLETED", "SUCCESS", "PAID", "DONE", "OK", "000", "00", "0"];
   
   return (
-    successValues.includes(status) ||
     successValues.includes(result) ||
     successValues.includes(code) ||
-    status.includes("SUCCESS") ||
     result.includes("SUCCESS") ||
-    status.includes("COMPLETED") ||
     result.includes("COMPLETED")
   );
 }
@@ -257,8 +254,12 @@ app.get("/api/checkout/status/:orderId", async (req, res) => {
       // Not ok yet. Could be failed or pending.
       // We don't mark as failed immediately to allow user time to pay.
       // But if resultcode indicates explicit failure, we could.
-      const statusValue = String(ppData?.payment_status || ppData?.status || "").toUpperCase();
-      if (statusValue === "FAILED" || statusValue === "EXPIRED") {
+      let statusValue = String(ppData?.payment_status || ppData?.status || "").toUpperCase();
+      if (ppData?.data && Array.isArray(ppData.data) && ppData.data.length > 0) {
+        statusValue = String(statusValue || ppData.data[0].payment_status || ppData.data[0].status || "").toUpperCase();
+      }
+      
+      if (statusValue === "FAILED" || statusValue === "EXPIRED" || statusValue === "CANCELLED") {
         await db.ref(`checkoutSessions/${actualOrderId}`).update({
           status: "failed",
           pollAt: Date.now(),
@@ -344,8 +345,18 @@ app.all("/api/palmpesa/webhook", async (req, res) => {
     const ok = paymentSuccess(body);
     console.log("Payment Success result:", ok);
 
+    let finalStatus = "pending";
+    if (ok) {
+      finalStatus = "completed";
+    } else {
+      const s = String(payment_status || "").toUpperCase();
+      if (s === "FAILED" || s === "EXPIRED" || s === "CANCELLED") {
+        finalStatus = "failed";
+      }
+    }
+
     const updatePayload = {
-      status: ok ? "completed" : "failed",
+      status: finalStatus,
       webhookAt: Date.now(),
       reference: reference ?? null,
       payment_status: payment_status ?? null,
@@ -359,7 +370,7 @@ app.all("/api/palmpesa/webhook", async (req, res) => {
     // Update user's payment record if UID is available
     if (session.uid) {
       await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
-        status: ok ? "completed" : "failed",
+        status: finalStatus,
         updatedAt: Date.now(),
         reference: reference ?? null,
         payment_status: payment_status ?? null,
