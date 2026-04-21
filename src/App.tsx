@@ -3,6 +3,7 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
 import Home from "@/pages/Home";
 import BetslipDetail from "@/pages/BetslipDetail";
+import MovieGroupDetail from "@/pages/MovieGroupDetail";
 import Login from "@/pages/Login";
 import ForgotPassword from "@/pages/ForgotPassword";
 import Register from "@/pages/Register";
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="/payment/return" element={<PaymentReturn />} />
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/movies" element={<Movies />} />
+        <Route path="/movies/:groupId" element={<MovieGroupDetail />} />
         <Route
           path="/admin"
           element={

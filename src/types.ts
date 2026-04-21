@@ -51,3 +51,22 @@ export type AppNotification = {
   imageUrl?: string;
   createdAt: number;
 };
+
+export type MovieGroup = {
+  id?: string;
+  name: string;
+  thumbnail: string;
+  amount: number;
+  currency: string;
+  description: string;
+  createdAt: number;
+};
+
+export type Movie = {
+  id?: string;
+  groupId: string;
+  title: string;
+  youtubeId: string;
+  duration?: string;
+  createdAt: number;
+};

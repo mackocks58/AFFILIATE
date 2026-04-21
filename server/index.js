@@ -74,10 +74,12 @@ function paymentSuccess(payload) {
 app.post("/api/checkout/init", async (req, res) => {
   try {
     const admin = getAdmin();
-    const { idToken, betslipId, buyer } = req.body || {};
-    if (!idToken || !betslipId || !buyer?.name || !buyer?.email || !buyer?.phone) {
-      return res.status(400).json({ error: "Missing idToken, betslipId, or buyer details." });
+    const { idToken, betslipId, movieGroupId, buyer } = req.body || {};
+    
+    if (!idToken || (!betslipId && !movieGroupId) || !buyer?.name || !buyer?.email || !buyer?.phone) {
+      return res.status(400).json({ error: "Missing idToken, betslipId/movieGroupId, or buyer details." });
     }
+
     const nameParts = String(buyer.name).trim().split(/\s+/);
     if (nameParts.length < 2) {
       return res.status(400).json({ error: "Full name must include at least two words." });
@@ -87,93 +89,75 @@ app.post("/api/checkout/init", async (req, res) => {
     const uid = decoded.uid;
 
     const db = admin.database();
-    const slipSnap = await db.ref(`betslips/${betslipId}`).get();
-    if (!slipSnap.exists()) {
-      return res.status(404).json({ error: "Betslip not found." });
-    }
-    const slip = slipSnap.val();
-    const now = Date.now();
-    if (Number(slip.expiresAt) <= now) {
-      return res.status(400).json({ error: "This betslip has expired." });
-    }
+    let cost = 0;
+    let currency = "TZS";
+    let title = "";
 
-    const purchaseSnap = await db.ref(`purchases/${uid}/${betslipId}`).get();
-    if (purchaseSnap.exists() && purchaseSnap.val()?.status === "completed") {
-      return res.status(400).json({ error: "Already purchased." });
+    if (betslipId) {
+      const slipSnap = await db.ref(`betslips/${betslipId}`).get();
+      if (!slipSnap.exists()) return res.status(404).json({ error: "Betslip not found." });
+      const slip = slipSnap.val();
+      if (Number(slip.expiresAt) <= Date.now()) return res.status(400).json({ error: "This betslip has expired." });
+      
+      const pSnap = await db.ref(`purchases/${uid}/${betslipId}`).get();
+      if (pSnap.exists() && pSnap.val()?.status === "completed") return res.status(400).json({ error: "Already purchased." });
+      
+      cost = Number(slip.cost);
+      currency = slip.currency || "TZS";
+      title = slip.title;
+    } else if (movieGroupId) {
+      const groupSnap = await db.ref(`movieGroups/${movieGroupId}`).get();
+      if (!groupSnap.exists()) return res.status(404).json({ error: "Movie Group not found." });
+      const group = groupSnap.val();
+      
+      const pSnap = await db.ref(`purchases/${uid}/movieGroups/${movieGroupId}`).get();
+      if (pSnap.exists() && pSnap.val()?.status === "completed") return res.status(400).json({ error: "Already purchased." });
+
+      cost = Number(group.amount);
+      currency = group.currency || "TZS";
+      title = group.name;
     }
 
     const apiKey = process.env.PALMPESA_API_KEY;
     const userId = process.env.PALMPESA_USER_ID;
     const vendor = process.env.PALMPESA_VENDOR;
-    if (!apiKey || !userId) {
-      return res.status(500).json({ error: "PalmPesa is not configured on the server." });
-    }
+    if (!apiKey || !userId) return res.status(500).json({ error: "PalmPesa is not configured." });
 
     const reqProtocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
     const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
     const dynamicBase = `${reqProtocol}://${reqHost}`;
-    
-    // Priority: 1. SELCOM_WEBHOOK_PUBLIC_URL, 2. VITE_API_BASE_URL, 3. dynamic host, 4. PUBLIC_APP_URL
     const webhookBase = process.env.SELCOM_WEBHOOK_PUBLIC_URL || process.env.VITE_API_BASE_URL || dynamicBase || process.env.PUBLIC_APP_URL;
     const webhookUrl = `${webhookBase.replace(/\/$/, "")}/api/palmpesa/webhook`;
 
     const orderId = generateOrderId();
-    const amount = Number(slip.cost);
-    const currency = slip.currency || "TZS";
-
     const session = {
       uid,
-      betslipId,
-      amount,
+      betslipId: betslipId || null,
+      movieGroupId: movieGroupId || null,
+      amount: cost,
       currency,
       status: "pending",
-      createdAt: now,
+      createdAt: Date.now(),
       orderId,
+      title
     };
 
     await db.ref(`checkoutSessions/${orderId}`).set(session);
-    await db.ref(`userPayments/${uid}/${orderId}`).update({
-      betslipId,
-      amount,
-      currency,
-      status: "pending",
-      createdAt: now,
-      orderId,
-    });
-
-    console.log("PalmPesa Request:", {
-      userId,
-      vendor,
-      orderId,
-      buyerPhone: String(buyer.phone).trim(),
-      amount,
-    });
+    await db.ref(`userPayments/${uid}/${orderId}`).update(session);
 
     const palmpesaResp = await createPalmpesaOrder({
-      apiKey,
-      userId,
-      vendor,
-      orderId,
+      apiKey, userId, vendor, orderId,
       buyerEmail: String(buyer.email).trim(),
       buyerName: String(buyer.name).trim(),
       buyerPhone: String(buyer.phone).trim(),
-      amount,
+      amount: cost,
       webhookUrl,
     });
 
-    console.log("PalmPesa Response:", palmpesaResp);
-
     if (!isPalmpesaSuccess(palmpesaResp)) {
       await db.ref(`checkoutSessions/${orderId}`).update({ status: "palmpesa_error", palmpesa: palmpesaResp });
-      await db.ref(`userPayments/${uid}/${orderId}`).update({
-        status: "failed",
-        updatedAt: Date.now(),
-        palmpesa: palmpesaResp,
-      });
-      return res.status(502).json({
-        error: palmpesaResp?.message || palmpesaResp?.error || "PalmPesa order creation failed.",
-        details: palmpesaResp,
-      });
+      await db.ref(`userPayments/${uid}/${orderId}`).update({ status: "failed", updatedAt: Date.now() });
+      return res.status(502).json({ error: palmpesaResp?.message || "Order creation failed." });
     }
 
     await db.ref(`checkoutSessions/${orderId}`).update({
@@ -183,20 +167,17 @@ app.post("/api/checkout/init", async (req, res) => {
 
     if (palmpesaResp?.order_id) {
       await db.ref(`checkoutSessions/${palmpesaResp.order_id}`).set({
-        aliasFor: orderId,
-        uid,
-        betslipId,
-        amount,
-        currency
+        aliasFor: orderId, uid, betslipId: betslipId || null, movieGroupId: movieGroupId || null, amount: cost, currency
       });
     }
 
-    res.json({ orderId, message: palmpesaResp?.message || "Payment initiated. Check your phone." });
+    res.json({ orderId, message: "Payment initiated. Check your phone." });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e?.message || "Server error" });
   }
 });
+
 
 app.get("/api/checkout/status/:orderId", async (req, res) => {
   try {
@@ -242,6 +223,13 @@ app.get("/api/checkout/status/:orderId", async (req, res) => {
 
         if (session.betslipId) {
           await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
+            status: "completed",
+            paidAt: Date.now(),
+            amount: session.amount || 0,
+            orderId: actualOrderId,
+          });
+        } else if (session.movieGroupId) {
+          await db.ref(`purchases/${session.uid}/movieGroups/${session.movieGroupId}`).set({
             status: "completed",
             paidAt: Date.now(),
             amount: session.amount || 0,
@@ -378,15 +366,26 @@ app.all("/api/palmpesa/webhook", async (req, res) => {
       });
 
       // If successful, create the purchase record
-      if (ok && session.betslipId) {
-        await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
-          status: "completed",
-          paidAt: Date.now(),
-          amount: session.amount || 0,
-          orderId: actualOrderId,
-          reference: reference ?? null,
-        });
-        console.log(`Purchase completed for user ${session.uid}, betslip ${session.betslipId}`);
+      if (ok) {
+        if (session.betslipId) {
+          await db.ref(`purchases/${session.uid}/${session.betslipId}`).set({
+            status: "completed",
+            paidAt: Date.now(),
+            amount: session.amount || 0,
+            orderId: actualOrderId,
+            reference: reference ?? null,
+          });
+          console.log(`Purchase completed for user ${session.uid}, betslip ${session.betslipId}`);
+        } else if (session.movieGroupId) {
+          await db.ref(`purchases/${session.uid}/movieGroups/${session.movieGroupId}`).set({
+            status: "completed",
+            paidAt: Date.now(),
+            amount: session.amount || 0,
+            orderId: actualOrderId,
+            reference: reference ?? null,
+          });
+          console.log(`Purchase completed for user ${session.uid}, movie group ${session.movieGroupId}`);
+        }
       }
     } else {
       console.warn("No UID found in session. Could not update userPayments or purchases.");
