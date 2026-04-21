@@ -104,10 +104,13 @@ app.post("/api/checkout/init", async (req, res) => {
       return res.status(500).json({ error: "PalmPesa is not configured on the server." });
     }
 
-    const publicBase = process.env.PUBLIC_APP_URL || "http://localhost:5173";
-    const redirectUrl = `${publicBase.replace(/\/$/, "")}/payment/return`;
-    const cancelUrl = `${publicBase.replace(/\/$/, "")}/payment/cancel`;
-    const webhookUrl = `${process.env.SELCOM_WEBHOOK_PUBLIC_URL || publicBase}/api/palmpesa/webhook`;
+    const reqProtocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const reqHost = req.headers['x-forwarded-host'] || req.headers.host;
+    const dynamicBase = `${reqProtocol}://${reqHost}`;
+    
+    // Priority: 1. SELCOM_WEBHOOK_PUBLIC_URL, 2. VITE_API_BASE_URL, 3. dynamic host, 4. PUBLIC_APP_URL
+    const webhookBase = process.env.SELCOM_WEBHOOK_PUBLIC_URL || process.env.VITE_API_BASE_URL || dynamicBase || process.env.PUBLIC_APP_URL;
+    const webhookUrl = `${webhookBase.replace(/\/$/, "")}/api/palmpesa/webhook`;
 
     const orderId = generateOrderId();
     const amount = Number(slip.cost);
