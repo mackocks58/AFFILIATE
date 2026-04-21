@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
-import { onValue, push, ref, remove, set, update } from "firebase/database";
-import { ref as sRef, uploadBytesResumable, getDownloadURL } from "firebase/storage";
-import { db, storage } from "@/firebase";
+import { onValue, push, ref, remove, set } from "firebase/database";
+import { db } from "@/firebase";
 import type { Movie, MovieGroup } from "@/types";
 
 export function AdminMovies() {
@@ -19,7 +18,6 @@ export function AdminMovies() {
   const [mGroup, setMGroup] = useState("");
   
   const [busy, setBusy] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState<number | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -67,25 +65,20 @@ export function AdminMovies() {
     if (!mYoutube && !mFile) { setErr("Provide a YouTube ID or upload a video file."); return; }
 
     setBusy(true); setErr(null); setMsg(null);
-    setUploadProgress(0);
 
     try {
-      let videoUrl = "";
+      let videoData = "";
       if (mFile) {
-        const fileRef = sRef(storage, `movies/${Date.now()}_${mFile.name}`);
-        const uploadTask = uploadBytesResumable(fileRef, mFile);
-        
-        videoUrl = await new Promise((resolve, reject) => {
-          uploadTask.on('state_changed', 
-            (snapshot) => {
-              const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
-              setUploadProgress(progress);
-            }, 
-            (error) => reject(error), 
-            () => {
-              getDownloadURL(uploadTask.snapshot.ref).then(resolve);
-            }
-          );
+        // Limit warning: RTDB has a 10MB limit per node.
+        if (mFile.size > 10 * 1024 * 1024) {
+          throw new Error("File too large. Realtime Database only supports files up to 10MB. For larger movies, please use YouTube or Storage.");
+        }
+
+        const reader = new FileReader();
+        videoData = await new Promise<string>((resolve, reject) => {
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = () => reject(new Error("Failed to read video file"));
+          reader.readAsDataURL(mFile);
         });
       }
 
@@ -93,13 +86,13 @@ export function AdminMovies() {
       await set(ref(db, `movies/${key}`), {
         title: mTitle,
         youtubeId: mYoutube || null,
-        videoUrl: videoUrl || null,
+        videoUrl: videoData || null, // Storing Base64 directly in RTDB
         groupId: mGroup,
         createdAt: Date.now()
       });
       setMsg("Movie added successfully.");
-      setMTitle(""); setMYoutube(""); setMFile(null); setUploadProgress(null);
-    } catch (e: any) { setErr(e.message); setUploadProgress(null); }
+      setMTitle(""); setMYoutube(""); setMFile(null);
+    } catch (e: any) { setErr(e.message); }
     finally { setBusy(false); }
   }
 
@@ -169,14 +162,9 @@ export function AdminMovies() {
               <div className="field">
                 <label>Source: Upload Video File</label>
                 <input type="file" accept="video/*" onChange={e => setMFile(e.target.files?.[0] ?? null)} />
-                {uploadProgress !== null && (
-                  <div style={{ marginTop: 8, height: 8, background: "rgba(255,255,255,0.1)", borderRadius: 4, overflow: "hidden" }}>
-                    <div style={{ height: "100%", width: `${uploadProgress}%`, background: "var(--accent)", transition: "width 0.3s" }}></div>
-                  </div>
-                )}
               </div>
               <button className="btn" type="submit" disabled={busy}>
-                {busy ? (uploadProgress !== null ? `Uploading ${Math.round(uploadProgress)}%...` : "Processing...") : "Add Movie"}
+                {busy ? "Processing..." : "Add Movie"}
               </button>
             </form>
           </div>
