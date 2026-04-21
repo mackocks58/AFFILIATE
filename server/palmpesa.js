@@ -43,7 +43,13 @@ export async function createPalmpesaOrder({
     body: JSON.stringify(body),
   });
 
-  const data = await response.json();
+  let data;
+  const text = await response.text();
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = { error: "Non-JSON response from PalmPesa", status: response.status, details: text };
+  }
   return data;
 }
 
@@ -71,5 +77,12 @@ export async function checkPalmpesaStatus({ apiKey, orderId }) {
     body: JSON.stringify(body),
   });
   
-  return await response.json();
+  let data;
+  const text = await response.text();
+  try {
+    data = JSON.parse(text);
+  } catch (e) {
+    data = { error: "Non-JSON response from PalmPesa", status: response.status, details: text };
+  }
+  return data;
 }

@@ -36,7 +36,7 @@ export default function PaymentReturn() {
       }
     });
 
-    // Fallback: poll the backend every 5 seconds just in case the webhook is dropped by PalmPesa
+    // Fallback: poll the backend every 15 seconds just in case the webhook is dropped by PalmPesa
     const interval = setInterval(async () => {
       try {
         const base = String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
@@ -46,7 +46,7 @@ export default function PaymentReturn() {
       } catch (e) {
         // ignore network errors in polling
       }
-    }, 5000);
+    }, 15000);
 
     return () => {
       unsub();
