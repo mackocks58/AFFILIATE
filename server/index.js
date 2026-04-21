@@ -28,9 +28,17 @@ function generateOrderId() {
 }
 
 function paymentSuccess(payload) {
-  const status = String(payload?.payment_status ?? "").toUpperCase();
-  const result = String(payload?.result ?? "").toUpperCase();
-  const code = String(payload?.resultcode ?? "");
+  let status = String(payload?.payment_status ?? "").toUpperCase();
+  let result = String(payload?.result ?? "").toUpperCase();
+  let code = String(payload?.resultcode ?? "");
+
+  if (payload?.data && Array.isArray(payload.data) && payload.data.length > 0) {
+    const item = payload.data[0];
+    if (item.payment_status) status = String(item.payment_status).toUpperCase();
+    if (item.result) result = String(item.result).toUpperCase();
+    if (item.resultcode) code = String(item.resultcode);
+  }
+
   return status === "COMPLETED" || result === "SUCCESS" || code === "000";
 }
 
@@ -101,20 +109,27 @@ app.post("/api/checkout/init", async (req, res) => {
       orderId,
     });
 
-    const palmpesaResp = await createPalmpesaOrder({
+    console.log("PalmPesa Request:", {
       userId,
       vendor,
+      orderId,
+      buyerPhone: String(buyer.phone).trim(),
+      amount,
+    });
+
+    const palmpesaResp = await createPalmpesaOrder({
       apiKey,
+      userId,
+      vendor,
       orderId,
       buyerEmail: String(buyer.email).trim(),
       buyerName: String(buyer.name).trim(),
       buyerPhone: String(buyer.phone).trim(),
       amount,
-      currency,
-      redirectUrl,
-      cancelUrl,
       webhookUrl,
     });
+
+    console.log("PalmPesa Response:", palmpesaResp);
 
     if (!isPalmpesaSuccess(palmpesaResp)) {
       await db.ref(`checkoutSessions/${orderId}`).update({ status: "palmpesa_error", palmpesa: palmpesaResp });
@@ -129,18 +144,22 @@ app.post("/api/checkout/init", async (req, res) => {
       });
     }
 
-    const paymentUrl = extractPalmpesaUrl(palmpesaResp);
-    if (!paymentUrl) {
-      return res.status(502).json({ error: "PalmPesa did not return a payment URL.", details: palmpesaResp });
-    }
-
     await db.ref(`checkoutSessions/${orderId}`).update({
       status: "awaiting_payment",
-      paymentUrl,
-      palmpesaReference: palmpesaResp?.reference ?? null,
+      palmpesaReference: palmpesaResp?.order_id ?? null,
     });
 
-    res.json({ orderId, paymentUrl });
+    if (palmpesaResp?.order_id) {
+      await db.ref(`checkoutSessions/${palmpesaResp.order_id}`).set({
+        aliasFor: orderId,
+        uid,
+        betslipId,
+        amount,
+        currency
+      });
+    }
+
+    res.json({ orderId, message: palmpesaResp?.message || "Payment initiated. Check your phone." });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e?.message || "Server error" });
@@ -151,10 +170,18 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
   try {
     const admin = getAdmin();
     const body = req.body || {};
-    const orderId = body.order_id || body.orderId;
-    const transid = body.transid;
-    const reference = body.reference;
-    const payment_status = body.payment_status;
+    let orderId = body.order_id || body.orderId;
+    let transid = body.transid;
+    let reference = body.reference;
+    let payment_status = body.payment_status;
+
+    if (body.data && Array.isArray(body.data) && body.data.length > 0) {
+      const item = body.data[0];
+      orderId = orderId || item.order_id || item.orderId;
+      transid = transid || item.transid;
+      reference = reference || item.reference;
+      payment_status = payment_status || item.payment_status;
+    }
 
     if (!orderId && !transid) {
       return res.status(400).send("missing ids");
@@ -162,15 +189,21 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
 
     const db = admin.database();
     const key = orderId || transid;
-    const sessionSnap = await db.ref(`checkoutSessions/${key}`).get();
+    let sessionSnap = await db.ref(`checkoutSessions/${key}`).get();
     if (!sessionSnap.exists()) {
       return res.status(404).send("unknown session");
     }
 
-    const session = sessionSnap.val();
+    let session = sessionSnap.val();
+    let actualOrderId = key;
+    if (session.aliasFor) {
+      actualOrderId = session.aliasFor;
+      sessionSnap = await db.ref(`checkoutSessions/${actualOrderId}`).get();
+      session = sessionSnap.val();
+    }
     const ok = paymentSuccess({ payment_status, result: body.result, resultcode: body.resultcode });
 
-    await db.ref(`checkoutSessions/${key}`).update({
+    await db.ref(`checkoutSessions/${actualOrderId}`).update({
       status: ok ? "completed" : "failed",
       webhookAt: Date.now(),
       reference: reference ?? null,
@@ -178,7 +211,7 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
       transid: transid ?? null,
     });
 
-    await db.ref(`userPayments/${session.uid}/${key}`).update({
+    await db.ref(`userPayments/${session.uid}/${actualOrderId}`).update({
       status: ok ? "completed" : "failed",
       updatedAt: Date.now(),
       reference: reference ?? null,
@@ -191,7 +224,7 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
         status: "completed",
         paidAt: Date.now(),
         amount: session.amount,
-        orderId: key,
+        orderId: actualOrderId,
         reference: reference ?? null,
       });
     }

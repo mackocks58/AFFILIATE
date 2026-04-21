@@ -1,35 +1,36 @@
 
 export async function createPalmpesaOrder({
+  apiKey,
   userId,
   vendor,
-  apiKey,
   orderId,
   buyerEmail,
   buyerName,
   buyerPhone,
   amount,
-  currency,
-  redirectUrl,
-  cancelUrl,
   webhookUrl,
 }) {
-  const url = "https://palmpesa.drmlelwa.co.tz/api/process-payment";
+  const url = "https://palmpesa.drmlelwa.co.tz/api/palmpesa/initiate";
+
+  // Phone formatting: ensure it starts with 255 and has no leading 0
+  let phone = buyerPhone.replace(/\s+/g, "").replace(/^\+/, "");
+  if (phone.startsWith("0")) {
+    phone = "255" + phone.substring(1);
+  } else if (!phone.startsWith("255")) {
+    phone = "255" + phone;
+  }
 
   const body = {
-    user_id: Number(userId),
-    vendor: vendor || "TILL61103867",
-    order_id: orderId,
-    buyer_email: buyerEmail,
-    buyer_name: buyerName,
-    buyer_phone: buyerPhone.startsWith("255") ? buyerPhone : `255${buyerPhone.replace(/^0/, "")}`,
+    user_id: userId,
+    vendor: vendor,
+    name: buyerName,
+    email: buyerEmail,
+    phone: phone,
     amount: Math.round(Number(amount)),
-    currency: currency || "TZS",
-    redirect_url: redirectUrl,
-    cancel_url: cancelUrl,
-    webhook: webhookUrl,
-    buyer_remarks: "Betslip Purchase",
-    merchant_remarks: "Betslips Platform",
-    no_of_items: 1,
+    transaction_id: orderId,
+    address: "Tanzania",
+    postcode: "00000",
+    callback_url: webhookUrl,
   };
 
   const response = await fetch(url, {
@@ -47,11 +48,11 @@ export async function createPalmpesaOrder({
 }
 
 export function isPalmpesaSuccess(payload) {
-  // Based on docs, success in initiating returns a "sharable payment link" string in the error field (strange but okay)
-  // or it might return a specific structure.
-  return !!payload?.raw?.payment_gateway_url;
+  // Based on docs, success returns { "message": "Payment initiated...", "order_id": "PALMPESA..." }
+  return !!payload?.order_id || payload?.message?.includes("initiated");
 }
 
 export function extractPalmpesaUrl(payload) {
-  return payload?.raw?.payment_gateway_url || null;
+  // USSD push does not return a gateway URL
+  return null;
 }

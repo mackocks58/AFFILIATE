@@ -26,10 +26,8 @@
     },
     "userPayments": {
       "$uid": {
-        "$paymentId": {
-          ".read": "auth != null && auth.uid === $uid",
-          ".write": false
-        }
+        ".read": "auth != null && (auth.uid === $uid || auth.token.admin === true)",
+        ".write": false
       }
     },
     "supportTickets": {
@@ -38,6 +36,44 @@
         "$ticketId": {
           ".write": "auth != null && (auth.uid === $uid || auth.token.admin === true)"
         }
+      }
+    },
+    "users": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "referrals": {
+      "$code": {
+        ".read": "auth != null && root.child('users').child(auth.uid).child('affiliateCode').val() === $code",
+        ".write": "auth != null"
+      }
+    },
+    "chatChannels": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    },
+    "chatMessages": {
+      "$channelId": {
+        ".read": "auth != null",
+        ".write": "auth != null"
+      }
+    },
+    "userFollowing": {
+      "$uid": {
+        ".read": "auth != null",
+        ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "notifications": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "userReads": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null && auth.uid === $uid"
       }
     }
   }

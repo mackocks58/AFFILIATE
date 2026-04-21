@@ -57,7 +57,7 @@ export default function PaymentReturn() {
         <div className="card">
           <div className="card-body">
             <div className="alert info">
-              Confirming payment… If you just completed payment, this should update within a few seconds.
+              A payment prompt has been sent to your phone. Please approve it to unlock your code. This page will update automatically once completed.
             </div>
             <p className="muted" style={{ marginTop: 10 }}>
               You can safely open Payment history while you wait.

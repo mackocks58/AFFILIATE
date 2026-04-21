@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 import { onValue, ref } from "firebase/database";
 import { db } from "@/firebase";
 import type { Betslip, Purchase } from "@/types";
@@ -59,6 +59,7 @@ function BigCountdown({ expiresAt }: { expiresAt: number }) {
 
 export default function BetslipDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const [slip, setSlip] = useState<Betslip | null>(null);
   const [purchase, setPurchase] = useState<Purchase | null>(null);
@@ -141,7 +142,7 @@ export default function BetslipDetail() {
       }
       sessionStorage.setItem("checkoutOrderId", String(data.orderId));
       sessionStorage.setItem("checkoutBetslipId", id);
-      window.location.href = String(data.paymentUrl);
+      navigate("/payment/return");
     } catch (e: unknown) {
       setPayError(e instanceof Error ? e.message : "Payment could not be started.");
     } finally {
@@ -252,7 +253,7 @@ export default function BetslipDetail() {
               <div className="card-body">
                 <h2 style={{ margin: "0 0 10px", fontSize: 18 }}>Pay with PalmPesa</h2>
                 <p className="muted" style={{ marginTop: 0 }}>
-                  You will be redirected to complete payment. After payment, return here to see your code.
+                  A payment prompt will be sent to your phone. Approve the transaction to unlock your code.
                 </p>
                 {payError && <div className="alert" style={{ marginTop: 12 }}>{payError}</div>}
                 <div className="grid" style={{ gap: 12, marginTop: 12 }}>
