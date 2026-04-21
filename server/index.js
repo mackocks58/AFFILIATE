@@ -170,6 +170,8 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
   try {
     const admin = getAdmin();
     const body = req.body || {};
+    console.log("Webhook Received:", body);
+
     let orderId = body.order_id || body.orderId;
     let transid = body.transid;
     let reference = body.reference;
@@ -195,13 +197,17 @@ app.post("/api/palmpesa/webhook", async (req, res) => {
     }
 
     let session = sessionSnap.val();
+    console.log("Session Found:", session);
+
     let actualOrderId = key;
     if (session.aliasFor) {
       actualOrderId = session.aliasFor;
       sessionSnap = await db.ref(`checkoutSessions/${actualOrderId}`).get();
       session = sessionSnap.val();
+      console.log("Resolved Actual OrderId:", actualOrderId);
     }
-    const ok = paymentSuccess({ payment_status, result: body.result, resultcode: body.resultcode });
+    const ok = paymentSuccess(body);
+    console.log("Payment Success Check:", ok);
 
     await db.ref(`checkoutSessions/${actualOrderId}`).update({
       status: ok ? "completed" : "failed",
