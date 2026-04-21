@@ -18,6 +18,14 @@ app.use(
 app.use(express.json({ limit: "512kb" }));
 app.use(express.urlencoded({ extended: true }));
 
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error("JSON Parsing Error:", err.message);
+    return res.status(400).send("Invalid JSON payload");
+  }
+  next();
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
@@ -193,10 +201,11 @@ app.post("/api/checkout/init", async (req, res) => {
   }
 });
 
-app.post("/api/palmpesa/webhook", async (req, res) => {
+app.all("/api/palmpesa/webhook", async (req, res) => {
   try {
     const admin = getAdmin();
-    const body = req.body || {};
+    // Combine req.body and req.query in case they send via GET
+    const body = { ...(req.query || {}), ...(req.body || {}) };
     console.log("--- Webhook Received ---");
     console.log(JSON.stringify(body, null, 2));
 
