@@ -25,7 +25,8 @@ import WeeklyChallenge from "@/pages/WeeklyChallenge";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 import { useState, useEffect } from "react";
-import { auth } from "@/firebase";
+import { auth, db } from "@/firebase";
+import { ref, set } from "firebase/database";
 import { apiUrl } from "@/lib/apiBase";
 
 function AdminRoute({ children }: { children: ReactElement }) {
@@ -55,6 +56,32 @@ function GlobalActivationModal() {
   const [countdown, setCountdown] = useState(300);
   const [message, setMessage] = useState("");
   const [paymentReference, setPaymentReference] = useState<string>("");
+
+  const [manualMode, setManualMode] = useState(false);
+  const [manualPhone, setManualPhone] = useState("");
+  const [manualName, setManualName] = useState("");
+  const [manualScreenshot, setManualScreenshot] = useState("");
+  const [manualBusy, setManualBusy] = useState(false);
+  const [manualSuccess, setManualSuccess] = useState(false);
+  const [copyStatus, setCopyStatus] = useState<string | null>(null);
+
+  const uCountry = userData?.country || "Tanzania";
+  const isTanzania = uCountry === "Tanzania";
+
+  let costStr = "500 TZS";
+  if (uCountry === "Zambia") costStr = "6 ZMW";
+  else if (uCountry === "Burundi") costStr = "575 BIF";
+  else costStr = "500 TZS"; // Default fallback
+
+  const handleCopy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopyStatus("copied");
+      setTimeout(() => setCopyStatus(null), 3000);
+    } catch (e) {
+      console.error("Failed to copy", e);
+    }
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -143,7 +170,138 @@ function GlobalActivationModal() {
 
           {message && paymentState !== "processing" && paymentState !== "success" && <div className="alert" style={{ marginBottom: 16 }}>{message}</div>}
 
-          {paymentState === "idle" && (
+          {paymentState === "idle" && !manualMode && !isTanzania && !manualSuccess && (
+            <>
+              <p className="muted" style={{ marginTop: 0 }}>
+                Automatic payment is not available in {uCountry}. Please pay your activation fee manually.
+              </p>
+              
+              <div style={{ background: "rgba(16,185,129,0.1)", padding: 16, borderRadius: 12, border: "1px dashed rgba(16,185,129,0.4)", marginBottom: 20 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
+                  <h3 style={{ margin: 0, color: "#10b981", fontSize: 16 }}>Payment Instructions</h3>
+                  {copyStatus && <span style={{ fontSize: 12, color: "#10b981", fontWeight: 700 }}>Copied!</span>}
+                </div>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <span className="muted">Amount to Send</span>
+                  <strong style={{ color: "var(--text)" }}>{costStr}</strong>
+                </div>
+                
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, paddingBottom: 12, borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                  <div>
+                    <div className="muted" style={{ fontSize: 12 }}>Account Number</div>
+                    <strong style={{ color: "var(--text)" }}>+255 7XX XXX XXX</strong>
+                  </div>
+                  <button className="btn btn-ghost" style={{ padding: "4px 8px", fontSize: 12 }} onClick={() => handleCopy("+255 7XX XXX XXX")}>Copy</button>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div className="muted" style={{ fontSize: 12 }}>Account Name</div>
+                    <strong style={{ color: "var(--text)" }}>EAGLE STAR</strong>
+                  </div>
+                </div>
+              </div>
+
+              <div className="alert info" style={{ marginBottom: 16 }}>
+                Copy the payment number and send the money manually from your mobile money menu.
+              </div>
+
+              <button 
+                className="btn breathe" 
+                style={{ width: "100%", padding: 16, marginBottom: 16, background: "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(56,189,248,0.3))", borderColor: "rgba(56,189,248,0.5)", color: "var(--text)", fontWeight: 700, fontSize: 16 }} 
+                onClick={() => setManualMode(true)}
+              >
+                I Have Sent
+              </button>
+            </>
+          )}
+
+          {paymentState === "idle" && manualMode && !isTanzania && !manualSuccess && (
+            <>
+              <p className="muted" style={{ marginTop: 0 }}>
+                Please provide your payment details for verification.
+              </p>
+              
+              <div className="field" style={{ marginBottom: 12 }}>
+                <label>Phone Number Used to Send</label>
+                <input className="input" value={manualPhone} onChange={e => setManualPhone(e.target.value)} disabled={manualBusy} />
+              </div>
+              <div className="field" style={{ marginBottom: 12 }}>
+                <label>Sender Full Name</label>
+                <input className="input" value={manualName} onChange={e => setManualName(e.target.value)} disabled={manualBusy} />
+              </div>
+              <div className="field" style={{ marginBottom: 16 }}>
+                <label>Transaction Screenshot</label>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  className="input" 
+                  disabled={manualBusy} 
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    const reader = new FileReader();
+                    reader.onload = (ev) => {
+                      setManualScreenshot(ev.target?.result as string);
+                    };
+                    reader.readAsDataURL(file);
+                  }} 
+                />
+              </div>
+
+              {manualScreenshot && (
+                <div style={{ marginBottom: 16, textAlign: "center" }}>
+                  <img src={manualScreenshot} alt="Screenshot" style={{ maxWidth: "100%", maxHeight: 150, borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)" }} />
+                </div>
+              )}
+
+              <button 
+                className="btn" 
+                style={{ width: "100%", padding: 16, marginBottom: 8, background: "#10b981", color: "#000", fontWeight: 700 }} 
+                disabled={!manualPhone || !manualName || !manualScreenshot || manualBusy}
+                onClick={async () => {
+                  setManualBusy(true);
+                  try {
+                    const refPath = `manualPayments/${user.uid}_${Date.now()}`;
+                    const r = ref(db, refPath);
+                    await set(r, {
+                      uid: user.uid,
+                      phone: manualPhone,
+                      name: manualName,
+                      screenshot: manualScreenshot,
+                      amount: costStr,
+                      country: uCountry,
+                      status: "pending",
+                      timestamp: Date.now()
+                    });
+                    setManualSuccess(true);
+                  } catch (e: any) {
+                    setMessage("Failed to submit: " + e.message);
+                  }
+                  setManualBusy(false);
+                }}
+              >
+                {manualBusy ? "Submitting..." : "Submit Proof"}
+              </button>
+
+              <button className="btn btn-ghost" style={{ width: "100%", marginBottom: 16 }} onClick={() => setManualMode(false)} disabled={manualBusy}>
+                Back
+              </button>
+            </>
+          )}
+
+          {manualSuccess && (
+             <div style={{ textAlign: "center", marginBottom: 20 }}>
+               <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 48, height: 48, borderRadius: "50%", background: "#10b981", color: "var(--text)", marginBottom: 12 }}>
+                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>
+               </div>
+               <h3 style={{ margin: "0 0 8px", color: "#10b981", fontSize: 18 }}>Submitted Successfully!</h3>
+               <p className="muted" style={{ marginBottom: 20 }}>Your payment proof has been submitted. An admin will review and activate your account shortly.</p>
+             </div>
+          )}
+
+          {paymentState === "idle" && isTanzania && (
             <>
               <p className="muted" style={{ marginTop: 0 }}>Your account is currently inactive. Pay your activation fee to get started.</p>
               <div className="field" style={{ marginBottom: 12 }}>
