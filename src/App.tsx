@@ -49,7 +49,13 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 function GlobalActivationModal() {
   const { user, userData, logout } = useAuth();
   const navigate = useNavigate();
-  const [phone, setPhone] = useState("");
+
+  // Pre-fill from stored user data
+  const storedName = (userData?.displayName || user?.displayName || "").trim();
+  const storedPhone = (userData?.phone || "").trim();
+
+  const [fullName, setFullName] = useState(storedName);
+  const [phone, setPhone] = useState(storedPhone);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -57,7 +63,15 @@ function GlobalActivationModal() {
   if (userData.status !== "inactive") return null;
 
   async function startPayment() {
-    if (!phone.trim()) { setError("Please enter your phone number."); return; }
+    const nameParts = fullName.trim().split(/\s+/);
+    if (nameParts.length < 2) {
+      setError("Please enter your full name (at least two words, e.g. John Smith).");
+      return;
+    }
+    if (!phone.trim()) {
+      setError("Please enter your phone number.");
+      return;
+    }
     setBusy(true);
     setError("");
     try {
@@ -69,9 +83,7 @@ function GlobalActivationModal() {
           idToken: token,
           activationPayment: true,
           buyer: {
-            name: userData?.displayName && userData.displayName.trim().split(/\s+/).length >= 2
-              ? userData.displayName
-              : (user?.displayName || "Eagle Star User"),
+            name: fullName.trim(),
             email: userData?.email || user?.email || "user@example.com",
             phone: phone.trim()
           }
@@ -99,18 +111,31 @@ function GlobalActivationModal() {
         <div className="card-body">
           <h2 style={{ marginTop: 0, color: "#38bdf8", fontSize: 22 }}>🚀 Activate Your Account</h2>
           <p className="muted" style={{ marginTop: 0, lineHeight: 1.6 }}>
-            A USSD payment prompt will be sent to your phone. Approve it to activate your account and start earning commissions.
+            Pay <strong style={{ color: "var(--text)" }}>500 TZS</strong> via USSD to activate your account and unlock the affiliate commission system.
           </p>
 
-          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 20, flexWrap: "wrap" }}>
-            <div style={{ background: "#e60000", color: "#fff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 4 }}>VODACOM</div>
-            <div style={{ background: "#003b70", color: "#fff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 4 }}>TIGO</div>
-            <div style={{ background: "#cc0000", color: "#fff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 4 }}>AIRTEL</div>
-            <div style={{ background: "#f26522", color: "#fff", fontSize: 10, fontWeight: 700, padding: "4px 10px", borderRadius: 4 }}>HALOTEL</div>
+          <div style={{ display: "flex", gap: 8, justifyContent: "center", marginBottom: 18, flexWrap: "wrap" }}>
+            <div style={{ background: "#e60000", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 4 }}>VODACOM</div>
+            <div style={{ background: "#003b70", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 4 }}>TIGO</div>
+            <div style={{ background: "#cc0000", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 4 }}>AIRTEL</div>
+            <div style={{ background: "#f26522", color: "#fff", fontSize: 10, fontWeight: 700, padding: "3px 10px", borderRadius: 4 }}>HALOTEL</div>
+          </div>
+
+          <div className="field" style={{ marginBottom: 12 }}>
+            <label htmlFor="activation-name">Full Name <span style={{ color: "var(--muted)", fontSize: 12 }}>(two words minimum)</span></label>
+            <input
+              id="activation-name"
+              className="input"
+              placeholder="e.g. John Smith"
+              value={fullName}
+              onChange={e => setFullName(e.target.value)}
+              disabled={busy}
+              autoComplete="name"
+            />
           </div>
 
           <div className="field" style={{ marginBottom: 16 }}>
-            <label htmlFor="activation-phone">Phone Number (e.g. 0712345678 or 255712345678)</label>
+            <label htmlFor="activation-phone">Phone Number <span style={{ color: "var(--muted)", fontSize: 12 }}>(e.g. 0712345678)</span></label>
             <input
               id="activation-phone"
               className="input"
@@ -120,15 +145,18 @@ function GlobalActivationModal() {
               disabled={busy}
               type="tel"
               inputMode="numeric"
+              autoComplete="tel"
             />
           </div>
 
-          {error && <div className="alert" style={{ marginBottom: 16 }}>{error}</div>}
+          {error && (
+            <div className="alert" style={{ marginBottom: 16, fontSize: 14, lineHeight: 1.5 }}>{error}</div>
+          )}
 
           <button
             className="btn breathe"
             style={{ width: "100%", padding: 14, marginBottom: 12, background: "linear-gradient(135deg, rgba(56,189,248,0.2), rgba(16,185,129,0.35))", borderColor: "rgba(56,189,248,0.5)", color: "var(--text)", fontWeight: 700, fontSize: 16, opacity: busy ? 0.7 : 1 }}
-            disabled={busy || !phone.trim()}
+            disabled={busy || !phone.trim() || !fullName.trim()}
             onClick={() => void startPayment()}
           >
             {busy ? "Initiating Payment…" : "Pay 500 TZS & Activate"}
