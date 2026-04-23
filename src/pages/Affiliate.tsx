@@ -34,45 +34,25 @@ export default function Affiliate() {
         }
         setAffiliateCode(code);
 
-        // Fetch Level 1
-        const q1 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(code));
-        const s1 = await get(q1);
-        const l1: any[] = [];
-        const l1Codes: string[] = [];
-        if (s1.exists()) {
-          s1.forEach(child => {
-            const v = child.val();
-            l1.push({ uid: child.key, ...v });
-            if (v.affiliateCode) l1Codes.push(v.affiliateCode);
+        // Fetch All Users once and build the tree locally to avoid index errors!
+        const allUsersSnap = await get(ref(db, "users"));
+        const allUsers: any[] = [];
+        if (allUsersSnap.exists()) {
+          allUsersSnap.forEach(child => {
+            allUsers.push({ uid: child.key, ...child.val() });
           });
         }
-        
-        // Fetch Level 2
-        const l2: any[] = [];
-        const l2Codes: string[] = [];
-        for (const c1 of l1Codes) {
-          const q2 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(c1));
-          const s2 = await get(q2);
-          if (s2.exists()) {
-            s2.forEach(child => {
-               const v = child.val();
-               l2.push({ uid: child.key, ...v });
-               if (v.affiliateCode) l2Codes.push(v.affiliateCode);
-            });
-          }
-        }
 
-        // Fetch Level 3
-        const l3: any[] = [];
-        for (const c2 of l2Codes) {
-          const q3 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(c2));
-          const s3 = await get(q3);
-          if (s3.exists()) {
-            s3.forEach(child => {
-               l3.push({ uid: child.key, ...child.val() });
-            });
-          }
-        }
+        // Level 1
+        const l1 = allUsers.filter(u => u.referredBy === code);
+        const l1Codes = l1.map(u => u.affiliateCode).filter(Boolean);
+
+        // Level 2
+        const l2 = allUsers.filter(u => l1Codes.includes(u.referredBy));
+        const l2Codes = l2.map(u => u.affiliateCode).filter(Boolean);
+
+        // Level 3
+        const l3 = allUsers.filter(u => l2Codes.includes(u.referredBy));
 
         l1.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
         l2.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
