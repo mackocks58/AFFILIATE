@@ -39,7 +39,7 @@
       }
     },
     "users": {
-      ".indexOn": ["affiliateCode"],
+      ".indexOn": ["affiliateCode", "referredBy"],
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid"
