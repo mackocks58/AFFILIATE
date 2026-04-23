@@ -1,8 +1,8 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
-import { getAdmin } from "./firebaseAdmin.js";
-import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess, checkPalmpesaStatus } from "./palmpesa.js";
+import { getAdmin } from "./_lib/firebaseAdmin.js";
+import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess, checkPalmpesaStatus } from "./_lib/palmpesa.js";
 import crypto from "crypto";
 
 const PORT = Number(process.env.PORT || 8787);
