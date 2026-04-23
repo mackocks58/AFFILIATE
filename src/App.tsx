@@ -147,6 +147,40 @@ function GlobalActivationModal() {
                   });
                   const data = await res.json();
                   if (!res.ok) throw new Error(data.error || "Failed to initiate payment");
+
+                  // Polling logic
+                  let pollCount = 0;
+                  const maxPolls = 15; // 15 * 4s = 60s
+                  
+                  const pollInterval = setInterval(async () => {
+                    pollCount++;
+                    if (pollCount > maxPolls) {
+                      clearInterval(pollInterval);
+                      setPaymentState("idle");
+                      setMessage("Payment verification timed out. If you paid, it will update shortly.");
+                      return;
+                    }
+                    try {
+                      const checkRes = await fetch(apiUrl(`/api/checkout/status/${data.orderId}`));
+                      if (!checkRes.ok) return;
+                      const checkData = await checkRes.json();
+                      if (checkData.status === "completed") {
+                        clearInterval(pollInterval);
+                        setPaymentState("success");
+                        setMessage("Payment Successful!");
+                      } else if (checkData.status === "failed") {
+                        clearInterval(pollInterval);
+                        setPaymentState("idle");
+                        setMessage("Payment failed. Please try again.");
+                      }
+                    } catch (e) {
+                      console.error("Polling error", e);
+                    }
+                  }, 4000);
+                  
+                  // Also rely on the useEffect listener as a backup
+                  const handleUnmount = () => clearInterval(pollInterval);
+                  
                 } catch (e: any) {
                   setPaymentState("idle");
                   setMessage(e.message || "Error");
