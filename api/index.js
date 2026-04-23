@@ -177,9 +177,25 @@ app.post("/api/checkout/init", async (req, res) => {
       return res.status(502).json({ error: palmpesaResp?.message || "Order creation failed." });
     }
 
+    // Fetch the reference IMMEDIATELY so we can provide a fallback to the user
+    let paymentReference = null;
+    if (palmpesaResp.order_id) {
+      try {
+        const statusCheck = await checkPalmpesaStatus({ apiKey, orderId: palmpesaResp.order_id });
+        if (statusCheck?.reference) {
+          paymentReference = statusCheck.reference;
+        } else if (statusCheck?.data && Array.isArray(statusCheck.data) && statusCheck.data.length > 0 && statusCheck.data[0].reference) {
+          paymentReference = statusCheck.data[0].reference;
+        }
+      } catch (err) {
+        console.error("Failed to fetch immediate status for reference:", err);
+      }
+    }
+
     await db.ref(`checkoutSessions/${orderId}`).update({
-      status: "awaiting_payment",
-      palmpesaReference: palmpesaResp?.order_id ?? null,
+      palmpesaReference: palmpesaResp.order_id || null,
+      palmpesaUrl: extractPalmpesaUrl(palmpesaResp),
+      paymentReference: paymentReference || null
     });
 
     if (palmpesaResp?.order_id) {
@@ -188,7 +204,11 @@ app.post("/api/checkout/init", async (req, res) => {
       });
     }
 
-    res.json({ orderId, message: "Payment initiated. Check your phone." });
+    res.json({ 
+      orderId, 
+      message: "Payment initiated. Check your phone.",
+      paymentReference: paymentReference
+    });
   } catch (e) {
     console.error(e);
     res.status(500).json({ error: e?.message || "Server error" });

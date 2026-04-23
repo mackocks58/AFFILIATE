@@ -17,6 +17,7 @@ export default function PaymentReturn() {
     if (!user) return;
     const orderId = sessionStorage.getItem("checkoutOrderId");
     const betslipId = sessionStorage.getItem("checkoutBetslipId");
+    const isActivation = sessionStorage.getItem("checkoutActivation") === "true";
     if (!orderId) {
       setPhase("missing");
       return;
@@ -32,14 +33,16 @@ export default function PaymentReturn() {
         setTimeout(() => {
           sessionStorage.removeItem("checkoutOrderId");
           sessionStorage.removeItem("checkoutBetslipId");
+          sessionStorage.removeItem("checkoutActivation");
           if (betslipId) nav(`/slip/${betslipId}`, { replace: true });
-          else nav("/", { replace: true });
-        }, 1500);
+          else nav("/", { replace: true }); // activation → home (auth context picks up status change)
+        }, 2000);
       } else if (s === "failed") {
         setPhase("failed");
       }
     });
 
+    // Aggressive polling: trigger backend to check PalmPesa every 8 seconds
     const interval = setInterval(async () => {
       try {
         const base = String(import.meta.env.VITE_API_BASE_URL || "").replace(/\/$/, "");
@@ -47,7 +50,7 @@ export default function PaymentReturn() {
       } catch (e) {
         // ignore network errors in polling
       }
-    }, 15000);
+    }, 8000);
 
     const countdownInterval = setInterval(() => {
       setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
@@ -142,23 +145,30 @@ export default function PaymentReturn() {
         </div>
       )}
 
-      {user && phase === "success" && (
-        <div className="card" style={{ maxWidth: 500, margin: "0 auto" }}>
-          <div className="card-body" style={{ textAlign: "center", padding: "40px 20px" }}>
-            <div style={{ 
-              width: 80, height: 80, borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", 
-              display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px",
-              color: "#10b981"
-            }}>
-              <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="20 6 9 17 4 12"></polyline>
-              </svg>
+      {user && phase === "success" && (() => {
+        const isActivation = sessionStorage.getItem("checkoutActivation") === "true";
+        return (
+          <div className="card" style={{ maxWidth: 500, margin: "0 auto" }}>
+            <div className="card-body" style={{ textAlign: "center", padding: "40px 20px" }}>
+              <div style={{ 
+                width: 80, height: 80, borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", 
+                display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px",
+                color: "#10b981"
+              }}>
+                <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+              </div>
+              <h2 style={{ margin: "0 0 10px", fontSize: 24, color: "#10b981" }}>Payment Successful!</h2>
+              <p className="muted">
+                {isActivation
+                  ? "Your account is now active! Redirecting to your dashboard..."
+                  : "Redirecting to your unlocked betslip..."}
+              </p>
             </div>
-            <h2 style={{ margin: "0 0 10px", fontSize: 24, color: "#10b981" }}>Payment Successful!</h2>
-            <p className="muted">Redirecting to your unlocked betslip...</p>
           </div>
-        </div>
-      )}
+        );
+      })()}
 
       {user && phase === "failed" && (
         <div className="card" style={{ maxWidth: 500, margin: "0 auto" }}>
