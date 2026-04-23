@@ -92,8 +92,8 @@ export default function Movies() {
               }}
               onMouseEnter={(e) => { 
                 e.currentTarget.style.transform = "translateY(-6px)"; 
-                e.currentTarget.style.boxShadow = unlocked ? "0 12px 30px rgba(16, 185, 129, 0.2)" : "0 12px 30px rgba(250, 204, 21, 0.15)"; 
-                e.currentTarget.style.borderColor = unlocked ? "var(--accent)" : "#facc15"; 
+                e.currentTarget.style.boxShadow = unlocked ? "0 12px 30px rgba(16, 185, 129, 0.2)" : "0 12px 30px rgba(56, 189, 248, 0.15)"; 
+                e.currentTarget.style.borderColor = unlocked ? "var(--accent)" : "#38bdf8"; 
               }}
               onMouseLeave={(e) => { 
                 e.currentTarget.style.transform = "none"; 
@@ -130,13 +130,13 @@ export default function Movies() {
                   }}>
                     <span className="breathe" style={{ fontSize: 40, marginBottom: 12 }}>🔒</span>
                     <span style={{ 
-                      background: "rgba(250, 204, 21, 0.9)", 
+                      background: "rgba(56, 189, 248, 0.9)", 
                       color: "#000", 
                       padding: "6px 12px", 
                       borderRadius: 20, 
                       fontSize: 14, 
                       fontWeight: 800,
-                      boxShadow: "0 0 20px rgba(250, 204, 21, 0.5)"
+                      boxShadow: "0 0 20px rgba(56, 189, 248, 0.5)"
                     }}>
                       {group.amount} {group.currency}
                     </span>
@@ -148,7 +148,7 @@ export default function Movies() {
                     top: 12,
                     right: 12,
                     background: "rgba(16, 185, 129, 0.9)",
-                    color: "#fff",
+                    color: "var(--text)",
                     padding: "4px 8px",
                     borderRadius: 8,
                     fontSize: 11,
@@ -160,7 +160,7 @@ export default function Movies() {
                 )}
               </div>
               <div className="card-body" style={{ padding: 16 }}>
-                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: unlocked ? "var(--accent)" : "#fef08a" }}>
+                <h3 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: unlocked ? "var(--accent)" : "#050816" }}>
                   {group.name}
                 </h3>
                 <p style={{ margin: "6px 0 0 0", fontSize: 13, color: "var(--muted)", lineHeight: 1.4 }}>
@@ -174,4 +174,9 @@ export default function Movies() {
     </Shell>
   );
 }
+
+
+
+
+
 

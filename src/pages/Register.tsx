@@ -3,7 +3,6 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from "@/firebase";
-import { Shell } from "@/components/Shell";
 
 export default function Register() {
   const nav = useNavigate();
@@ -14,6 +13,7 @@ export default function Register() {
   const [referralCode, setReferralCode] = useState(params.get("ref") || "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [country, setCountry] = useState("Tanzania");
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -27,11 +27,20 @@ export default function Register() {
       
       const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
       
+      let initialBonus = 15000;
+      if (country === "Zambia") initialBonus = 157.5;
+      if (country === "Burundi") initialBonus = 17250;
+
       await set(ref(db, `users/${cred.user.uid}`), {
         displayName,
         email: email.trim(),
         affiliateCode: newCode,
         referredBy: referralCode.trim() || null,
+        status: "inactive",
+        country,
+        balance: 0,
+        deposited: 0,
+        bonus: initialBonus,
         createdAt: Date.now()
       });
 
@@ -51,21 +60,22 @@ export default function Register() {
   }
 
   return (
-    <Shell>
-      <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "75vh", position: "relative" }}>
-        {/* Glowing orb background */}
-        <div className="breathe" style={{ position: "absolute", width: 400, height: 400, background: "radial-gradient(circle, rgba(250, 204, 21, 0.12) 0%, transparent 70%)", borderRadius: "50%", zIndex: 0 }}></div>
-        
-        <div className="card" style={{ maxWidth: 440, width: "100%", zIndex: 1, border: "1px solid rgba(250, 204, 21, 0.3)", boxShadow: "0 0 50px rgba(250, 204, 21, 0.1)", background: "linear-gradient(180deg, rgba(17, 27, 51, 0.85), rgba(5, 8, 22, 0.95))", backdropFilter: "blur(16px)" }}>
-          <div className="card-body" style={{ padding: "32px 24px" }}>
+    <div style={{ width: "100%", minHeight: "100dvh", display: "flex", justifyContent: "center", alignItems: "center", padding: "16px", position: "relative", overflow: "hidden", boxSizing: "border-box" }}>
+      {/* Glowing orb background */}
+      <div className="breathe" style={{ position: "absolute", width: 400, height: 400, background: "radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)", borderRadius: "50%", zIndex: 0 }}></div>
+      
+      <div className="card" style={{ maxWidth: 440, width: "100%", zIndex: 1, border: "1px solid rgba(56, 189, 248, 0.3)", boxShadow: "0 0 50px rgba(56, 189, 248, 0.1)", background: "linear-gradient(180deg, rgba(17, 27, 51, 0.85), rgba(5, 8, 22, 0.95))", backdropFilter: "blur(16px)" }}>
+        <div className="card-body" style={{ padding: "24px 20px" }}>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
-              <div className="breathe" style={{ width: 64, height: 64, margin: "0 auto 16px", borderRadius: 16, background: "conic-gradient(from 210deg, #fef08a, #facc15, #a16207, #fef08a)", boxShadow: "0 10px 30px rgba(250, 204, 21, 0.3)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#050816" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><line x1="19" y1="8" x2="19" y2="14"></line><line x1="22" y1="11" x2="16" y2="11"></line></svg>
+              <div className="animated-star" style={{ width: 64, height: 64, margin: "0 auto 16px" }}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="#38bdf8" stroke="#a16207" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round">
+                  <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+                </svg>
               </div>
               <div style={{ marginBottom: 12 }}>
-                <span className="brand-text-zyntra" style={{ fontSize: 42 }}>Zyntra</span>
+                <span className="brand-text-eaglestar" style={{ fontSize: 42 }}>EAGLE STAR</span>
               </div>
-              <h1 style={{ margin: 0, background: "linear-gradient(to right, #fef08a, #facc15)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 24, letterSpacing: "-0.02em" }}>Create Account</h1>
+              <h1 style={{ margin: 0, background: "linear-gradient(to right, #050816, #38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", fontSize: 24, letterSpacing: "-0.02em" }}>Create Account</h1>
               <p style={{ margin: "8px 0 0", color: "var(--muted)", fontSize: 15 }}>Join us to get the best premium picks.</p>
             </div>
 
@@ -73,19 +83,19 @@ export default function Register() {
             
             <form className="grid" style={{ gap: 20 }} onSubmit={submit}>
               <div className="field">
-                <label htmlFor="name" style={{ color: "#fef08a", opacity: 0.9 }}>Full Name</label>
+                <label htmlFor="name" style={{ color: "var(--text)", opacity: 0.9 }}>Full Name</label>
                 <input
                   id="name"
                   className="input"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   autoComplete="name"
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px" }}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
                   required
                 />
               </div>
               <div className="field">
-                <label htmlFor="email" style={{ color: "#fef08a", opacity: 0.9 }}>Email Address</label>
+                <label htmlFor="email" style={{ color: "var(--text)", opacity: 0.9 }}>Email Address</label>
                 <input
                   id="email"
                   className="input"
@@ -93,12 +103,12 @@ export default function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px" }}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
                   required
                 />
               </div>
               <div className="field">
-                <label htmlFor="password" style={{ color: "#fef08a", opacity: 0.9 }}>Password</label>
+                <label htmlFor="password" style={{ color: "var(--text)", opacity: 0.9 }}>Password</label>
                 <input
                   id="password"
                   className="input"
@@ -107,34 +117,45 @@ export default function Register() {
                   onChange={(e) => setPassword(e.target.value)}
                   autoComplete="new-password"
                   minLength={6}
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px" }}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
                   required
                 />
               </div>
               <div className="field">
-                <label htmlFor="referralCode" style={{ color: "#fef08a", opacity: 0.9 }}>Referral Code <span style={{opacity:0.5, fontSize:11}}>(Optional)</span></label>
-                <input
-                  id="referralCode"
-                  className="input mono"
-                  value={referralCode}
-                  onChange={(e) => setReferralCode(e.target.value.toUpperCase())}
-                  placeholder="e.g. A1B2C3"
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(250, 204, 21, 0.2)", padding: "14px 16px", textTransform: "uppercase" }}
-                />
+                <label htmlFor="country" style={{ color: "var(--text)", opacity: 0.9 }}>Country</label>
+                <select
+                  id="country"
+                  className="input"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px", color: "var(--text)" }}
+                  required
+                >
+                  <option value="Tanzania">Tanzania</option>
+                  <option value="Zambia">Zambia</option>
+                  <option value="Burundi">Burundi</option>
+                </select>
               </div>
-              <button className="btn breathe" type="submit" disabled={busy} style={{ background: "linear-gradient(135deg, rgba(250,204,21,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(250,204,21,0.5)", color: "#fef08a", fontWeight: 700, padding: "16px", marginTop: "8px", boxShadow: "0 0 20px rgba(250, 204, 21, 0.15)", fontSize: 16 }}>
+
+              <button className="btn breathe" type="submit" disabled={busy} style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(56,189,248,0.5)", color: "var(--text)", fontWeight: 700, padding: "16px", marginTop: "8px", boxShadow: "0 0 20px rgba(56, 189, 248, 0.15)", fontSize: 16 }}>
                 {busy ? "Creating…" : "Create Account Securely"}
               </button>
             </form>
             
             <div style={{ textAlign: "center", marginTop: 24 }}>
               <p className="muted" style={{ fontSize: 15 }}>
-                Already have an account? <Link to="/login" style={{ color: "#facc15", textDecoration: "underline", fontWeight: 600 }}>Log in</Link>
+                Already have an account? <Link to="/login" style={{ color: "#38bdf8", textDecoration: "underline", fontWeight: 600 }}>Log in</Link>
               </p>
             </div>
           </div>
         </div>
-      </div>
-    </Shell>
+
+
+    </div>
   );
 }
+
+
+
+
+

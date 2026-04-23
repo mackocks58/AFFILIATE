@@ -154,16 +154,16 @@ export function TeamDetailsModal({ teamId, fixtureId, leagueId, season, teamName
                   >
                     <div style={{ position: "relative", width: 44, height: 44, marginBottom: 2 }}>
                       {player.photo ? (
-                        <img src={player.photo} alt={player.name} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", backgroundColor: "#fff", boxShadow: "0 4px 10px rgba(0,0,0,0.5)" }} />
+                        <img src={player.photo} alt={player.name} style={{ width: "100%", height: "100%", borderRadius: "50%", objectFit: "cover", border: "2px solid #fff", backgroundcolor: "var(--text)", boxShadow: "0 4px 10px rgba(0,0,0,0.5)" }} />
                       ) : (
                         <div style={{ width: "100%", height: "100%", borderRadius: "50%", background: "#fff", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #ddd", boxShadow: "0 4px 10px rgba(0,0,0,0.5)" }}>
                            <span style={{color:"#059669", fontSize:14, fontWeight:800}}>{player.number}</span>
                         </div>
                       )}
-                      {!player.photo && <div style={{ position: "absolute", bottom: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "#fff", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", border: "1px solid #fff" }}>{player.number}</div>}
+                      {!player.photo && <div style={{ position: "absolute", bottom: -4, right: -4, width: 20, height: 20, borderRadius: "50%", background: "var(--accent)", color: "var(--text)", fontSize: 10, display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", border: "1px solid #fff" }}>{player.number}</div>}
                     </div>
                     <div style={{ 
-                      fontSize: 11, color: "#fff", textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1)",
+                      fontSize: 11, color: "var(--text)", textShadow: "0 1px 3px rgba(0,0,0,0.8), 0 1px 1px rgba(0,0,0,1)",
                       textAlign: "center", marginTop: 2, fontWeight: 800,
                       whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%",
                       background: "rgba(0,0,0,0.4)", padding: "2px 6px", borderRadius: 4
@@ -230,7 +230,7 @@ export function TeamDetailsModal({ teamId, fixtureId, leagueId, season, teamName
               <td>
                 <div style={{ display: "flex", gap: 2 }}>
                   {s.form?.split('').map((f: string, i: number) => (
-                    <span key={i} style={{ width: 14, height: 14, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: "bold", background: f === 'W' ? "var(--accent)" : f === 'D' ? "#94a3b8" : "var(--danger)", color: "#fff" }}>{f}</span>
+                    <span key={i} style={{ width: 14, height: 14, borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, fontWeight: "bold", background: f === 'W' ? "var(--accent)" : f === 'D' ? "#94a3b8" : "var(--danger)", color: "var(--text)" }}>{f}</span>
                   ))}
                 </div>
               </td>
@@ -357,19 +357,19 @@ export function TeamDetailsModal({ teamId, fixtureId, leagueId, season, teamName
                 <>
                   {teamStanding && (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 12, marginBottom: 24 }}>
-                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.5)" }}>
+                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.85)" }}>
                         <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Played</div>
                         <div style={{ fontSize: 20, fontWeight: 800 }}>{teamStanding.all?.played}</div>
                       </div>
-                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.5)" }}>
+                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.85)" }}>
                         <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Won</div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--accent)" }}>{teamStanding.all?.win}</div>
                       </div>
-                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.5)" }}>
+                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.85)" }}>
                         <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Drawn</div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{teamStanding.all?.draw}</div>
                       </div>
-                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.5)" }}>
+                      <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(5, 8, 22, 0.85)" }}>
                         <div style={{ fontSize: 11, color: "var(--muted)", textTransform: "uppercase" }}>Lost</div>
                         <div style={{ fontSize: 20, fontWeight: 800, color: "var(--danger)" }}>{teamStanding.all?.lose}</div>
                       </div>
@@ -463,7 +463,7 @@ function PlayerDetailsModal({ playerId, season, onClose }: { playerId: number, s
               </div>
               <div className="card" style={{ padding: 12, textAlign: "center", background: "rgba(255,255,255,0.03)" }}>
                 <div style={{ fontSize: 10, color: "var(--muted)", textTransform: "uppercase" }}>Rating</div>
-                <div style={{ fontSize: 20, fontWeight: 800, color: "#facc15" }}>{parseFloat(playerInfo.statistics[0].games.rating || "0").toFixed(1)}</div>
+                <div style={{ fontSize: 20, fontWeight: 800, color: "#38bdf8" }}>{parseFloat(playerInfo.statistics[0].games.rating || "0").toFixed(1)}</div>
               </div>
             </div>
 
@@ -504,3 +504,8 @@ function tabStyle(isActive: boolean): React.CSSProperties {
     transition: "all 0.2s", fontSize: 14
   };
 }
+
+
+
+
+

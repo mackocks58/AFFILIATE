@@ -193,7 +193,7 @@ export default function PaymentHistory() {
 
               <div style={{ textAlign: "center", marginBottom: 30, padding: "20px 0", background: "rgba(255,255,255,0.03)", borderRadius: 12 }}>
                 <div style={{ fontSize: 14, color: "#a0aec0", textTransform: "uppercase", letterSpacing: 1, marginBottom: 5 }}>Amount</div>
-                <div style={{ fontSize: 36, fontWeight: 800, color: "#fff" }}>
+                <div style={{ fontSize: 36, fontWeight: 800, color: "var(--text)" }}>
                   {selectedPayment.amount} <span style={{ fontSize: 20, color: "#a0aec0" }}>{selectedPayment.currency}</span>
                 </div>
                 <div style={{ marginTop: 15 }}>
@@ -260,3 +260,6 @@ export default function PaymentHistory() {
     </Shell>
   );
 }
+
+
+

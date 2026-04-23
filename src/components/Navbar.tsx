@@ -54,12 +54,10 @@ export function Navbar() {
     <nav className="nav">
       <Link to="/" className="brand">
         <span className="brand-mark" aria-hidden />
-        <span className="brand-text-zyntra">Zyntra</span>
+        <span className="brand-text-eaglestar">EAGLE STAR</span>
       </Link>
       <div className="nav-links">
-        <NavLink to="/movies" className={linkCls}>
-          Movies
-        </NavLink>
+
         {user && isAdmin && (
           <NavLink to="/admin" className={linkCls}>
             Admin
@@ -88,7 +86,7 @@ export function Navbar() {
                   top: -6,
                   right: -6,
                   background: "var(--danger)",
-                  color: "#fff",
+                  color: "var(--text)",
                   fontSize: 10,
                   fontWeight: "bold",
                   borderRadius: "10px",
@@ -100,12 +98,11 @@ export function Navbar() {
                 </span>
               )}
             </Link>
-            <button type="button" onClick={() => void logout()}>
-              Sign out
-            </button>
+
           </div>
         )}
       </div>
     </nav>
   );
 }
+

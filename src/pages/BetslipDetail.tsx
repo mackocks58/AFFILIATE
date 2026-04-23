@@ -14,10 +14,10 @@ function BigCountdown({ expiresAt }: { expiresAt: number }) {
   if (cd.expired) {
     return <div className="alert">This betslip has expired.</div>;
   }
-  let color = "#fde047";
-  let bg = "linear-gradient(135deg, rgba(250, 204, 21, 0.2), rgba(234, 179, 8, 0.05))";
-  let border = "rgba(250, 204, 21, 0.5)";
-  let shadow = "0 0 12px rgba(250, 204, 21, 0.4)";
+  let color = "#38bdf8";
+  let bg = "linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(16, 185, 129, 0.05))";
+  let border = "rgba(56, 189, 248, 0.5)";
+  let shadow = "0 0 12px rgba(56, 189, 248, 0.4)";
   
   if (cd.days === 0) {
     if (cd.hours === 0 && cd.minutes < 15) {
@@ -235,9 +235,9 @@ export default function BetslipDetail() {
           <div style={{ position: "relative", overflow: "hidden" }}>
             <img className={`thumb ${unlocked ? "breathe" : ""}`} src={slip.imageUrl} alt="" style={{ filter: unlocked ? "none" : "blur(14px) brightness(0.6)", transform: unlocked ? "none" : "scale(1.1)", transition: "all 0.5s ease" }} />
             {!unlocked && (
-              <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "rgba(5, 8, 22, 0.3)" }}>
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, bottom: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", background: "rgba(5, 8, 22, 0.7)" }}>
                 <span className="breathe" style={{ fontSize: 42, filter: "drop-shadow(0 2px 8px rgba(0,0,0,0.8))", display: "inline-block" }}>🔒</span>
-                <span className="breathe" style={{ fontWeight: 700, marginTop: 12, color: "#fff", textShadow: "0 2px 8px rgba(0,0,0,0.8)", letterSpacing: "0.05em", fontSize: 18, display: "inline-block" }}>LOCKED</span>
+                <span className="breathe" style={{ fontWeight: 700, marginTop: 12, color: "var(--text)", textShadow: "0 2px 8px rgba(0,0,0,0.8)", letterSpacing: "0.05em", fontSize: 18, display: "inline-block" }}>LOCKED</span>
               </div>
             )}
           </div>
@@ -372,3 +372,8 @@ export default function BetslipDetail() {
     </Shell>
   );
 }
+
+
+
+
+

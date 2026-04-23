@@ -295,7 +295,7 @@ export default function Chat() {
                   
                   <div 
                     style={{ 
-                      background: isMine ? "rgba(56, 189, 248, 0.2)" : "rgba(17, 27, 51, 0.8)", 
+                      background: isMine ? "rgba(56, 189, 248, 0.2)" : "rgba(5, 8, 22, 0.95)", 
                       border: isMine ? "1px solid rgba(56, 189, 248, 0.4)" : "1px solid var(--stroke)",
                       padding: "10px 14px", 
                       borderRadius: isMine ? "16px 16px 4px 16px" : "16px 16px 16px 4px",
@@ -359,3 +359,6 @@ export default function Chat() {
     </Shell>
   );
 }
+
+
+

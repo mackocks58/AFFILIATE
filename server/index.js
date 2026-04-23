@@ -74,10 +74,10 @@ function paymentSuccess(payload) {
 app.post("/api/checkout/init", async (req, res) => {
   try {
     const admin = getAdmin();
-    const { idToken, betslipId, movieGroupId, buyer } = req.body || {};
+    const { idToken, betslipId, movieGroupId, buyer, activationPayment } = req.body || {};
     
-    if (!idToken || (!betslipId && !movieGroupId) || !buyer?.name || !buyer?.email || !buyer?.phone) {
-      return res.status(400).json({ error: "Missing idToken, betslipId/movieGroupId, or buyer details." });
+    if (!idToken || (!betslipId && !movieGroupId && !activationPayment) || !buyer?.name || !buyer?.email || !buyer?.phone) {
+      return res.status(400).json({ error: "Missing required details." });
     }
 
     const nameParts = String(buyer.name).trim().split(/\s+/);
@@ -116,6 +116,21 @@ app.post("/api/checkout/init", async (req, res) => {
       cost = Number(group.amount);
       currency = group.currency || "TZS";
       title = group.name;
+    } else if (activationPayment) {
+      const uSnap = await db.ref(`users/${uid}`).get();
+      const uCountry = uSnap.exists() ? uSnap.val().country || "Tanzania" : "Tanzania";
+      
+      if (uCountry === "Zambia") {
+        cost = Math.ceil(500 * 0.0105); // 500 * 0.0105 ≈ 6
+        currency = "ZMW";
+      } else if (uCountry === "Burundi") {
+        cost = 500 * 1.15; // 575
+        currency = "BIF";
+      } else {
+        cost = 500;
+        currency = "TZS";
+      }
+      title = "Account Activation";
     }
 
     const apiKey = process.env.PALMPESA_API_KEY;
@@ -134,6 +149,7 @@ app.post("/api/checkout/init", async (req, res) => {
       uid,
       betslipId: betslipId || null,
       movieGroupId: movieGroupId || null,
+      activationPayment: activationPayment || false,
       amount: cost,
       currency,
       status: "pending",
@@ -167,7 +183,7 @@ app.post("/api/checkout/init", async (req, res) => {
 
     if (palmpesaResp?.order_id) {
       await db.ref(`checkoutSessions/${palmpesaResp.order_id}`).set({
-        aliasFor: orderId, uid, betslipId: betslipId || null, movieGroupId: movieGroupId || null, amount: cost, currency
+        aliasFor: orderId, uid, betslipId: betslipId || null, movieGroupId: movieGroupId || null, activationPayment: activationPayment || false, amount: cost, currency
       });
     }
 
@@ -385,6 +401,65 @@ app.all("/api/palmpesa/webhook", async (req, res) => {
             reference: reference ?? null,
           });
           console.log(`Purchase completed for user ${session.uid}, movie group ${session.movieGroupId}`);
+        } else if (session.activationPayment) {
+          await db.ref(`users/${session.uid}`).update({
+            status: "active"
+          });
+          console.log(`User ${session.uid} activated.`);
+
+          // Distribute commissions
+          const userSnap = await db.ref(`users/${session.uid}`).get();
+          if (userSnap.exists()) {
+            const userData = userSnap.val();
+            let currentRefCode = userData.referredBy;
+            const referralCountry = userData.country || "Tanzania";
+            
+            const percentages = [0.45, 0.15, 0.01]; // Level 1, 2, 3
+            const exchangeRatesToTZS = { "Tanzania": 1, "Zambia": 0.0105, "Burundi": 1.15 };
+            
+            const referralRateToTZS = exchangeRatesToTZS[referralCountry] || 1;
+            // Convert activation amount back to TZS base for standard calculation
+            const amountInTZS = session.amount / referralRateToTZS;
+            
+            for (let level = 0; level < 3; level++) {
+              if (!currentRefCode) break;
+              
+              const refQuery = await db.ref('users').orderByChild('affiliateCode').equalTo(currentRefCode).once('value');
+              if (refQuery.exists()) {
+                const refObj = refQuery.val();
+                const referrerUid = Object.keys(refObj)[0];
+                const referrerData = refObj[referrerUid];
+                const referrerCountry = referrerData.country || "Tanzania";
+                const referrerRateToTZS = exchangeRatesToTZS[referrerCountry] || 1;
+                
+                // Calculate commission in referrer's local currency
+                const commissionInTZS = amountInTZS * percentages[level];
+                const commissionAmount = commissionInTZS * referrerRateToTZS;
+                
+                // Update referrer balance
+                const currentBalance = Number(referrerData.balance || 0);
+                const currentCommissionTotal = Number(referrerData.commissionTotal || 0);
+                
+                await db.ref(`users/${referrerUid}`).update({
+                  balance: currentBalance + commissionAmount,
+                  commissionTotal: currentCommissionTotal + commissionAmount
+                });
+                
+                // Record commission
+                await db.ref(`commissions/${referrerUid}/${actualOrderId}_L${level+1}`).set({
+                  amount: commissionAmount,
+                  currency: referrerCountry === "Zambia" ? "ZMW" : referrerCountry === "Burundi" ? "BIF" : "TZS",
+                  fromUser: session.uid,
+                  level: level + 1,
+                  createdAt: Date.now()
+                });
+                
+                currentRefCode = referrerData.referredBy; // move up to next level
+              } else {
+                break;
+              }
+            }
+          }
         }
       }
     } else {
