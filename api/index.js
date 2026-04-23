@@ -403,6 +403,58 @@ app.all("/api/palmpesa/webhook", async (req, res) => {
   }
 });
 
+app.post("/api/admin/manual-payments/approve", async (req, res) => {
+  try {
+    const { idToken, paymentId } = req.body;
+    if (!idToken || !paymentId) return res.status(400).json({ error: "Missing parameters" });
+
+    const admin = getAdmin();
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    
+    const db = admin.database();
+    
+    // Check if user is admin via database
+    const userSnap = await db.ref(`users/${decoded.uid}`).get();
+    if (!userSnap.exists() || userSnap.val().isAdmin !== true) {
+      // Also fallback to custom claim if they have it
+      if (!decoded.admin) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+    }
+
+    const paymentRef = db.ref(`manualPayments/${paymentId}`);
+    const snap = await paymentRef.get();
+    if (!snap.exists()) return res.status(404).json({ error: "Payment not found" });
+
+    const payment = snap.val();
+    if (payment.status === "approved") {
+      return res.status(400).json({ error: "Already approved" });
+    }
+
+    // Extract raw numeric amount
+    const amountNumber = parseFloat(String(payment.amount).replace(/[^\d.-]/g, ''));
+
+    // Create session object for fulfillment
+    const session = {
+      uid: payment.uid,
+      activationPayment: true,
+      amount: amountNumber
+    };
+
+    const success = await processFulfillment(db, session, paymentId, "MANUAL_APPROVAL");
+
+    if (success) {
+      await paymentRef.update({ status: "approved", approvedAt: Date.now(), approvedBy: decoded.uid });
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: "Fulfillment failed" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Betslips API listening on http://127.0.0.1:${PORT}`);

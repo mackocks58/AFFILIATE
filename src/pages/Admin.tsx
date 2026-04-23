@@ -12,6 +12,7 @@ import { storagePathFromDownloadUrl } from "@/lib/storagePath";
 import { AdminMatches } from "./AdminMatches";
 import { AdminNotifications } from "./AdminNotifications";
 import { AdminMovies } from "./AdminMovies";
+import { AdminManualPayments } from "./AdminManualPayments";
 
 type Row = Betslip & { id: string };
 
@@ -192,7 +193,7 @@ export default function Admin() {
     );
   }
 
-  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies">("betslips");
+  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments">("betslips");
 
   return (
     <Shell>
@@ -210,6 +211,9 @@ export default function Admin() {
           </button>
           <button className={`btn ${tab === "notifications" ? "" : "btn-ghost"}`} onClick={() => setTab("notifications")}>
             Notifications
+          </button>
+          <button className={`btn ${tab === "manual_payments" ? "" : "btn-ghost"}`} onClick={() => setTab("manual_payments")}>
+            Payments
           </button>
         </div>
       </div>
@@ -304,6 +308,8 @@ export default function Admin() {
         <AdminMovies />
       ) : tab === "matches" ? (
         <AdminMatches />
+      ) : tab === "manual_payments" ? (
+        <AdminManualPayments />
       ) : (
         <AdminNotifications />
       )}
