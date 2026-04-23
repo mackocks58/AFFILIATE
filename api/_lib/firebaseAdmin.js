@@ -16,7 +16,7 @@ function initAdmin() {
 
   const jsonPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
   const jsonRaw = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
-  const localPath = join(__dirname, "..", "..", "serviceAccount.json");
+  const localPath = join(__dirname, "..", "serviceAccount.json");
 
   if (jsonRaw) {
     admin.initializeApp({
