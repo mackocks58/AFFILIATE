@@ -26,6 +26,7 @@ import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 import { useState, useEffect } from "react";
 import { auth } from "@/firebase";
+import { apiUrl } from "@/lib/apiBase";
 
 function AdminRoute({ children }: { children: ReactElement }) {
   const { user, loading } = useAuth();
@@ -135,7 +136,7 @@ function GlobalActivationModal() {
                 setMessage("");
                 try {
                   const token = await auth.currentUser?.getIdToken();
-                  const res = await fetch("/api/checkout/init", {
+                  const res = await fetch(apiUrl("/api/checkout/init"), {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({
