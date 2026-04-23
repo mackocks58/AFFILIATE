@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ref, onValue, set, get } from "firebase/database";
+import { ref, get, set, query, orderByChild, equalTo } from "firebase/database";
 import { db } from "@/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { Shell } from "@/components/Shell";
@@ -7,7 +7,12 @@ import { Shell } from "@/components/Shell";
 export default function Affiliate() {
   const { user } = useAuth();
   const [affiliateCode, setAffiliateCode] = useState<string | null>(null);
-  const [referrals, setReferrals] = useState<any[]>([]);
+  
+  const [level1, setLevel1] = useState<any[]>([]);
+  const [level2, setLevel2] = useState<any[]>([]);
+  const [level3, setLevel3] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState<1 | 2 | 3>(1);
+  
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
@@ -15,40 +20,72 @@ export default function Affiliate() {
     if (!user) return;
     
     async function loadAffiliateData() {
-      // 1. Get or create user's affiliate code
-      const userRef = ref(db, `users/${user!.uid}`);
-      const snap = await get(userRef);
-      
-      let code = "";
-      if (snap.exists() && snap.val().affiliateCode) {
-        code = snap.val().affiliateCode;
-      } else {
-        // Legacy user without an affiliate code, create one
-        code = Math.random().toString(36).substring(2, 8).toUpperCase();
-        await set(ref(db, `users/${user!.uid}/affiliateCode`), code);
-      }
-      
-      setAffiliateCode(code);
-
-      // 2. Listen for referrals
-      const refCountRef = ref(db, `referrals/${code}`);
-      const unsub = onValue(refCountRef, (rSnap) => {
-        if (rSnap.exists()) {
-          const data = rSnap.val();
-          const list = Object.entries(data).map(([uid, val]: [string, any]) => ({
-            uid,
-            ...val
-          }));
-          // Sort by newest
-          list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-          setReferrals(list);
+      try {
+        // 1. Get or create user's affiliate code
+        const userRef = ref(db, `users/${user!.uid}`);
+        const snap = await get(userRef);
+        
+        let code = "";
+        if (snap.exists() && snap.val().affiliateCode) {
+          code = snap.val().affiliateCode;
         } else {
-          setReferrals([]);
+          code = Math.random().toString(36).substring(2, 8).toUpperCase();
+          await set(ref(db, `users/${user!.uid}/affiliateCode`), code);
         }
-        setLoading(false);
-      });
+        setAffiliateCode(code);
 
-      return () => unsub();
+        // Fetch Level 1
+        const q1 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(code));
+        const s1 = await get(q1);
+        const l1: any[] = [];
+        const l1Codes: string[] = [];
+        if (s1.exists()) {
+          s1.forEach(child => {
+            const v = child.val();
+            l1.push({ uid: child.key, ...v });
+            if (v.affiliateCode) l1Codes.push(v.affiliateCode);
+          });
+        }
+        
+        // Fetch Level 2
+        const l2: any[] = [];
+        const l2Codes: string[] = [];
+        for (const c1 of l1Codes) {
+          const q2 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(c1));
+          const s2 = await get(q2);
+          if (s2.exists()) {
+            s2.forEach(child => {
+               const v = child.val();
+               l2.push({ uid: child.key, ...v });
+               if (v.affiliateCode) l2Codes.push(v.affiliateCode);
+            });
+          }
+        }
+
+        // Fetch Level 3
+        const l3: any[] = [];
+        for (const c2 of l2Codes) {
+          const q3 = query(ref(db, "users"), orderByChild("referredBy"), equalTo(c2));
+          const s3 = await get(q3);
+          if (s3.exists()) {
+            s3.forEach(child => {
+               l3.push({ uid: child.key, ...child.val() });
+            });
+          }
+        }
+
+        l1.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        l2.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        l3.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        setLevel1(l1);
+        setLevel2(l2);
+        setLevel3(l3);
+      } catch (e) {
+        console.error("Error loading affiliate data", e);
+      } finally {
+        setLoading(false);
+      }
     }
 
     loadAffiliateData();
@@ -81,27 +118,36 @@ export default function Affiliate() {
     );
   }
 
+  const activeList = activeTab === 1 ? level1 : activeTab === 2 ? level2 : level3;
+
   return (
     <Shell>
       <div style={{ marginBottom: 32, textAlign: "center", position: "relative" }}>
-        {/* Glow effect behind title */}
         <div className="breathe" style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%, -50%)", width: 200, height: 100, background: "radial-gradient(ellipse, rgba(56, 189, 248, 0.25) 0%, transparent 70%)", zIndex: -1 }}></div>
         
         <h1 className="page-title" style={{ display: "inline-flex", alignItems: "center", gap: 10, background: "linear-gradient(to right, #050816, #38bdf8)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           <span className="breathe" style={{ display: "inline-block", color: "#38bdf8" }}>✨</span> Affiliate Program
         </h1>
-        <p className="muted" style={{ margin: "0 0 16px 0" }}>Invite your friends to EAGLE STAR and earn commissions!</p>
+        <p className="muted" style={{ margin: "0 0 16px 0" }}>Invite your friends to EAGLE STAR and earn multi-level commissions!</p>
       </div>
 
       {loading ? (
-        <div style={{ textAlign: "center", padding: 40, color: "var(--accent)" }}>Loading your stats...</div>
+        <div style={{ textAlign: "center", padding: 40, color: "var(--accent)" }}>Loading your network...</div>
       ) : (
         <div className="grid" style={{ gap: 24 }}>
           {/* Stats Row */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: 16 }}>
-            <div className="card" style={{ background: "linear-gradient(135deg, rgba(161, 98, 7, 0.2), rgba(5, 8, 22, 0.9))", border: "1px solid rgba(56, 189, 248, 0.3)", padding: 24, textAlign: "center", borderRadius: 20 }}>
-              <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text)", opacity: 0.8 }}>Total Referrals</div>
-              <div style={{ fontSize: 48, fontWeight: 900, color: "#38bdf8", textShadow: "0 0 20px rgba(56,189,248,0.5)" }}>{referrals.length}</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 16 }}>
+            <div className="card" style={{ background: "linear-gradient(135deg, rgba(161, 98, 7, 0.2), rgba(5, 8, 22, 0.9))", border: "1px solid rgba(56, 189, 248, 0.3)", padding: 20, textAlign: "center", borderRadius: 20 }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text)", opacity: 0.8 }}>Level 1</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: "#38bdf8", textShadow: "0 0 20px rgba(56,189,248,0.5)" }}>{level1.length}</div>
+            </div>
+            <div className="card" style={{ background: "linear-gradient(135deg, rgba(161, 98, 7, 0.2), rgba(5, 8, 22, 0.9))", border: "1px solid rgba(16, 185, 129, 0.3)", padding: 20, textAlign: "center", borderRadius: 20 }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text)", opacity: 0.8 }}>Level 2</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: "#10b981", textShadow: "0 0 20px rgba(16,185,129,0.5)" }}>{level2.length}</div>
+            </div>
+            <div className="card" style={{ background: "linear-gradient(135deg, rgba(161, 98, 7, 0.2), rgba(5, 8, 22, 0.9))", border: "1px solid rgba(139, 92, 246, 0.3)", padding: 20, textAlign: "center", borderRadius: 20 }}>
+              <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.1em", color: "var(--text)", opacity: 0.8 }}>Level 3</div>
+              <div style={{ fontSize: 32, fontWeight: 900, color: "#8b5cf6", textShadow: "0 0 20px rgba(139,92,246,0.5)" }}>{level3.length}</div>
             </div>
           </div>
 
@@ -109,7 +155,7 @@ export default function Affiliate() {
           <div className="card" style={{ padding: 24, border: "1px solid rgba(56, 189, 248, 0.4)", position: "relative", overflow: "hidden", borderRadius: 20 }}>
             <div style={{ position: "absolute", top: -50, right: -50, width: 200, height: 200, background: "radial-gradient(circle, rgba(56,189,248,0.1) 0%, transparent 60%)", borderRadius: "50%" }}></div>
             <h3 style={{ margin: "0 0 12px 0", fontSize: 20, color: "var(--text)" }}>Your Unique Link</h3>
-            <p className="muted" style={{ marginBottom: 20, fontSize: 14 }}>Share this link! When someone registers, they'll be added to your referral network.</p>
+            <p className="muted" style={{ marginBottom: 20, fontSize: 14 }}>Share this link! When someone registers, they'll be added to your Level 1 network.</p>
             
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               <div style={{ background: "rgba(0,0,0,0.4)", border: "1px solid rgba(56, 189, 248, 0.3)", borderRadius: 12, padding: "12px", overflowX: "auto" }}>
@@ -145,13 +191,35 @@ export default function Affiliate() {
             </div>
           </div>
 
-          {/* Referral List */}
+          {/* Referral List Tabs */}
           <div className="card" style={{ padding: 24, borderRadius: 20 }}>
-            <h3 style={{ margin: "0 0 20px 0", fontSize: 18 }}>Recent Referrals</h3>
+            <div style={{ display: "flex", gap: 8, marginBottom: 20, borderBottom: "1px solid rgba(255,255,255,0.1)", paddingBottom: 16 }}>
+              <button 
+                className={`btn ${activeTab === 1 ? "" : "btn-ghost"}`} 
+                onClick={() => setActiveTab(1)}
+                style={{ flex: 1, padding: "10px 0" }}
+              >
+                Level 1 ({level1.length})
+              </button>
+              <button 
+                className={`btn ${activeTab === 2 ? "" : "btn-ghost"}`} 
+                onClick={() => setActiveTab(2)}
+                style={{ flex: 1, padding: "10px 0" }}
+              >
+                Level 2 ({level2.length})
+              </button>
+              <button 
+                className={`btn ${activeTab === 3 ? "" : "btn-ghost"}`} 
+                onClick={() => setActiveTab(3)}
+                style={{ flex: 1, padding: "10px 0" }}
+              >
+                Level 3 ({level3.length})
+              </button>
+            </div>
             
-            {referrals.length === 0 ? (
+            {activeList.length === 0 ? (
               <div className="alert" style={{ textAlign: "center", background: "rgba(255,255,255,0.02)", borderColor: "var(--stroke)", color: "var(--muted)" }}>
-                You haven't referred anyone yet. Share your link to start earning!
+                No referrals found in Level {activeTab}.
               </div>
             ) : (
               <div style={{ overflowX: "auto" }}>
@@ -164,11 +232,17 @@ export default function Affiliate() {
                     </tr>
                   </thead>
                   <tbody>
-                    {referrals.map((r, i) => (
+                    {activeList.map((r, i) => (
                       <tr key={r.uid || i}>
                         <td style={{ fontWeight: 600 }}>{r.displayName || "Unknown User"}</td>
-                        <td>{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "N/A"}</td>
-                        <td><span style={{ background: "rgba(16,185,129,0.15)", color: "var(--accent)", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: "bold" }}>Active</span></td>
+                        <td className="muted">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "N/A"}</td>
+                        <td>
+                          {r.status === "active" ? (
+                             <span style={{ background: "rgba(16,185,129,0.15)", color: "#10b981", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: "bold" }}>Active</span>
+                          ) : (
+                             <span style={{ background: "rgba(239,68,68,0.15)", color: "#ef4444", padding: "4px 8px", borderRadius: 6, fontSize: 11, fontWeight: "bold" }}>Inactive</span>
+                          )}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
