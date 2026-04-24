@@ -1,6 +1,14 @@
 import { useEffect, useState } from "react";
 import { onValue, ref, remove, update, get } from "firebase/database";
 import { db } from "@/firebase";
+import Swal from "sweetalert2";
+
+const darkSwal = Swal.mixin({
+  background: '#111b33',
+  color: '#fff',
+  confirmButtonColor: '#38bdf8',
+  cancelButtonColor: '#ef4444'
+});
 
 export function AdminWithdrawals() {
   const [withdrawals, setWithdrawals] = useState<any[]>([]);
@@ -21,10 +29,17 @@ export function AdminWithdrawals() {
   const filtered = withdrawals.filter(w => filter === "all" || w.status === filter);
 
   async function handleApprove(w: any) {
-    if (!confirm("Mark this withdrawal as completed? This will update the user's totalWithdrawn stat.")) return;
+    const result = await darkSwal.fire({
+      title: 'Approve Withdrawal?',
+      text: "This will mark it completed and update the user's totalWithdrawn stat.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Approve'
+    });
+    if (!result.isConfirmed) return;
+    
     setBusy(w.id);
     try {
-      // Get user to update totalWithdrawn
       const uSnap = await get(ref(db, `users/${w.uid}`));
       let totalWithdrawn = 0;
       if (uSnap.exists()) {
@@ -37,15 +52,24 @@ export function AdminWithdrawals() {
         [`withdrawals/${w.id}/processedAt`]: Date.now(),
         [`users/${w.uid}/totalWithdrawn`]: totalWithdrawn
       });
-      alert("Approved successfully!");
+      darkSwal.fire('Approved!', 'The withdrawal has been processed.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
 
   async function handleReject(w: any) {
-    if (!confirm("Reject this withdrawal? The requested amount will be refunded to their balance.")) return;
+    const result = await darkSwal.fire({
+      title: 'Reject & Refund?',
+      text: "The requested amount will be refunded to their balance.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Reject',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!result.isConfirmed) return;
+
     setBusy(w.id);
     try {
       const uSnap = await get(ref(db, `users/${w.uid}`));
@@ -60,27 +84,43 @@ export function AdminWithdrawals() {
         [`withdrawals/${w.id}/processedAt`]: Date.now(),
         [`users/${w.uid}/balance`]: balance
       });
-      alert("Rejected and refunded successfully.");
+      darkSwal.fire('Rejected', 'Funds have been refunded.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Permanently delete this record? (No refund will be issued)")) return;
+    const result = await darkSwal.fire({
+      title: 'Delete Record?',
+      text: "Permanently delete this record? (No refund will be issued)",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!result.isConfirmed) return;
+
     setBusy(id);
     try {
       await remove(ref(db, `withdrawals/${id}`));
+      darkSwal.fire('Deleted!', 'Record removed.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
 
   const copyText = (text: string) => {
     navigator.clipboard.writeText(text);
-    alert("Copied: " + text);
+    darkSwal.fire({
+      title: 'Copied!',
+      text: text,
+      icon: 'success',
+      timer: 1500,
+      showConfirmButton: false
+    });
   };
 
   return (

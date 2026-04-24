@@ -3,6 +3,14 @@ import { onValue, ref, remove, update } from "firebase/database";
 import { db } from "@/firebase";
 import { useAuth } from "@/context/AuthContext";
 import { apiUrl } from "@/lib/apiBase";
+import Swal from "sweetalert2";
+
+const darkSwal = Swal.mixin({
+  background: '#111b33',
+  color: '#fff',
+  confirmButtonColor: '#38bdf8',
+  cancelButtonColor: '#ef4444'
+});
 
 export function AdminManualPayments() {
   const { user } = useAuth();
@@ -24,7 +32,15 @@ export function AdminManualPayments() {
   const filtered = payments.filter(p => filter === "all" || p.status === filter);
 
   async function handleApprove(id: string) {
-    if (!confirm("Approve this payment? This will activate the user and process multi-level commissions.")) return;
+    const result = await darkSwal.fire({
+      title: 'Approve Payment?',
+      text: "This will activate the user and process multi-level commissions.",
+      icon: 'question',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Approve'
+    });
+    if (!result.isConfirmed) return;
+
     setBusy(id);
     try {
       const idToken = await user?.getIdToken();
@@ -35,31 +51,51 @@ export function AdminManualPayments() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Failed");
-      alert("Approved successfully!");
+      darkSwal.fire('Approved!', 'The payment was verified and commissions distributed.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
 
   async function handleReject(id: string) {
-    if (!confirm("Reject this payment?")) return;
+    const result = await darkSwal.fire({
+      title: 'Reject Payment?',
+      text: "This will mark the payment as rejected.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Yes, Reject',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!result.isConfirmed) return;
+
     setBusy(id);
     try {
       await update(ref(db, `manualPayments/${id}`), { status: "rejected" });
+      darkSwal.fire('Rejected', 'The payment was marked as rejected.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Permanently delete this record?")) return;
+    const result = await darkSwal.fire({
+      title: 'Delete Record?',
+      text: "Permanently delete this record? This action cannot be undone.",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Delete',
+      confirmButtonColor: '#ef4444'
+    });
+    if (!result.isConfirmed) return;
+
     setBusy(id);
     try {
       await remove(ref(db, `manualPayments/${id}`));
+      darkSwal.fire('Deleted!', 'Record removed.', 'success');
     } catch (e: any) {
-      alert("Error: " + e.message);
+      darkSwal.fire('Error', e.message, 'error');
     }
     setBusy(null);
   }
