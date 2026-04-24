@@ -13,6 +13,7 @@ import { AdminMatches } from "./AdminMatches";
 import { AdminNotifications } from "./AdminNotifications";
 import { AdminMovies } from "./AdminMovies";
 import { AdminManualPayments } from "./AdminManualPayments";
+import { AdminWithdrawals } from "./AdminWithdrawals";
 
 type Row = Betslip & { id: string };
 
@@ -193,7 +194,7 @@ export default function Admin() {
     );
   }
 
-  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments">("betslips");
+  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments" | "withdrawals">("betslips");
 
   return (
     <Shell>
@@ -214,6 +215,9 @@ export default function Admin() {
           </button>
           <button className={`btn ${tab === "manual_payments" ? "" : "btn-ghost"}`} onClick={() => setTab("manual_payments")}>
             Payments
+          </button>
+          <button className={`btn ${tab === "withdrawals" ? "" : "btn-ghost"}`} onClick={() => setTab("withdrawals")}>
+            Withdrawals
           </button>
         </div>
       </div>
@@ -310,6 +314,8 @@ export default function Admin() {
         <AdminMatches />
       ) : tab === "manual_payments" ? (
         <AdminManualPayments />
+      ) : tab === "withdrawals" ? (
+        <AdminWithdrawals />
       ) : (
         <AdminNotifications />
       )}
