@@ -215,6 +215,27 @@ app.post("/api/checkout/init", async (req, res) => {
   }
 });
 
+app.get("/api/auth/resolve-username/:username", async (req, res) => {
+  try {
+    const admin = getAdmin();
+    const db = admin.database();
+    const username = req.params.username.toLowerCase().trim();
+    
+    const usersRef = db.ref('users');
+    const snap = await usersRef.orderByChild('username').equalTo(username).limitToFirst(1).get();
+    
+    if (snap.exists()) {
+      const val = snap.val();
+      const uid = Object.keys(val)[0];
+      return res.json({ email: val[uid].email });
+    } else {
+      return res.status(404).json({ error: "Username not found" });
+    }
+  } catch(e) {
+    res.status(500).json({ error: e.message });
+  }
+});
+
 
 app.get("/api/checkout/status/:orderId", async (req, res) => {
   try {

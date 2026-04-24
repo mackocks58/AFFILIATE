@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
-import { auth, db } from "@/firebase";
-import { ref, query, orderByChild, equalTo, get } from "firebase/database";
+import { auth } from "@/firebase";
+import { apiUrl } from "@/lib/apiBase";
 
 export default function Login() {
   const nav = useNavigate();
@@ -22,15 +22,15 @@ export default function Login() {
       
       let loginEmail = email.trim();
       if (!loginEmail.includes('@')) {
-        const usersRef = ref(db, 'users');
-        const q = query(usersRef, orderByChild('username'), equalTo(loginEmail.toLowerCase()));
-        const snap = await get(q);
-        if (snap.exists()) {
-          const val = snap.val();
-          const uid = Object.keys(val)[0];
-          loginEmail = val[uid].email;
-        } else {
+        const res = await fetch(apiUrl(`/api/auth/resolve-username/${encodeURIComponent(loginEmail.toLowerCase())}`));
+        if (!res.ok) {
           throw new Error("Username not found.");
+        }
+        const data = await res.json();
+        if (data.email) {
+          loginEmail = data.email;
+        } else {
+          throw new Error("Could not resolve username.");
         }
       }
 
