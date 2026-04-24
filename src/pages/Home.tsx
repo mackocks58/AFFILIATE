@@ -36,6 +36,7 @@ export default function Home() {
   const currency = userData.country === "Zambia" ? "ZMW" : userData.country === "Burundi" ? "BIF" : "TZS";
   const balance = Number(userData.balance || 0).toLocaleString();
   const deposited = Number(userData.deposited || 0).toLocaleString();
+  const withdrawn = Number(userData.totalWithdrawn || 0).toLocaleString();
   const bonus = Number(userData.bonus || 0).toLocaleString();
 
   const getGreeting = () => {
@@ -88,9 +89,15 @@ export default function Home() {
 
         {/* Two smaller cards in one row */}
         <div style={{ display: "flex", gap: 16, width: "100%" }}>
-          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(56, 189, 248, 0.5)", padding: 20, textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(56, 189, 248, 0.15)" }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#38bdf8", marginBottom: 4 }}>Deposited Amount</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{deposited} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(56, 189, 248, 0.5)", padding: 20, textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(56, 189, 248, 0.15)", display: "flex", flexDirection: "column", gap: 16 }}>
+            <div>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#38bdf8", marginBottom: 4 }}>Deposited Amount</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{deposited} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+            </div>
+            <div style={{ borderTop: "1px solid rgba(56, 189, 248, 0.2)", paddingTop: 16 }}>
+              <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "var(--danger)", marginBottom: 4 }}>Total Withdrawn</div>
+              <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{withdrawn} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+            </div>
           </div>
 
           <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(16, 185, 129, 0.5)", padding: 20, textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(16, 185, 129, 0.15)", position: "relative", overflow: "hidden" }}>
