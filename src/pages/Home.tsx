@@ -9,6 +9,7 @@ export default function Home() {
   const { user, userData } = useAuth();
   const [activeReferrals, setActiveReferrals] = useState(0);
   const [showMessage, setShowMessage] = useState(true);
+  const [showBalance, setShowBalance] = useState(true);
 
   useEffect(() => {
     if (!user || !userData?.affiliateCode) return;
@@ -78,8 +79,11 @@ export default function Home() {
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.15em", color: "#eab308", fontWeight: 800, marginBottom: 4 }}>Available Balance</div>
             <div style={{ fontSize: 40, fontWeight: 900, color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <span>{balance}</span>
+              <span>{showBalance ? balance : "****"}</span>
               <span style={{ fontSize: 18, opacity: 0.6, fontWeight: 700 }}>{currency}</span>
+              <button onClick={() => setShowBalance(!showBalance)} style={{ background: "transparent", border: "none", color: "var(--text)", opacity: 0.6, cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", marginLeft: 8 }}>
+                <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"}`}></i>
+              </button>
             </div>
             <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center" }}>
               <Link to="/withdraw" className="btn breathe" style={{ padding: "12px 32px", fontSize: 15, borderRadius: 999, background: "linear-gradient(135deg, #facc15, #eab308)", color: "#0f172a", border: "none", boxShadow: "0 8px 24px rgba(250, 204, 21, 0.4)", fontWeight: 800 }}>Withdraw Funds</Link>
