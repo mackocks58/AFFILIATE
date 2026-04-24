@@ -11,7 +11,37 @@ export default function BindAccount() {
   const [accountName, setAccountName] = useState("");
   const [withdrawPassword, setWithdrawPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+
+  const networkData: Record<string, { value: string, logo: string }[]> = {
+    "Tanzania": [
+      { value: "M-Pesa (Vodacom)", logo: "https://logo.clearbit.com/vodacom.co.tz" },
+      { value: "Tigo Pesa", logo: "https://logo.clearbit.com/tigo.co.tz" },
+      { value: "Airtel Money (TZ)", logo: "https://logo.clearbit.com/airtel.co.tz" },
+      { value: "Halopesa", logo: "https://logo.clearbit.com/halotel.co.tz" }
+    ],
+    "Zambia": [
+      { value: "MTN Mobile Money", logo: "https://logo.clearbit.com/mtn.zm" },
+      { value: "Airtel Money (ZM)", logo: "https://logo.clearbit.com/airtel.com" },
+      { value: "Zamtel", logo: "https://logo.clearbit.com/zamtel.zm" }
+    ],
+    "Burundi": [
+      { value: "EcoCash", logo: "https://logo.clearbit.com/econet.bi" },
+      { value: "Lumicash", logo: "https://logo.clearbit.com/lumitel.bi" }
+    ],
+    "Mozambique": [
+      { value: "M-Pesa (MZ)", logo: "https://logo.clearbit.com/vodacom.co.mz" },
+      { value: "e-Mola", logo: "https://logo.clearbit.com/movitel.co.mz" }
+    ],
+    "Congo": [
+      { value: "M-Pesa (CD)", logo: "https://logo.clearbit.com/vodacom.cd" },
+      { value: "Airtel Money (CD)", logo: "https://logo.clearbit.com/airtel.com" },
+      { value: "Orange Money", logo: "https://logo.clearbit.com/orange.cd" }
+    ]
+  };
+
+  const availableNetworks = networkData[userData?.country || "Tanzania"] || [{ value: "Bank Transfer", logo: "https://logo.clearbit.com/bank.com" }];
 
   useEffect(() => {
     if (userData?.withdrawalDetails) {
@@ -55,7 +85,7 @@ export default function BindAccount() {
         <p className="muted">Secure your funds by binding your receiving account details.</p>
       </div>
 
-      <div className="card" style={{ maxWidth: 500, margin: "0 auto" }}>
+      <div className="card" style={{ maxWidth: 500, margin: "0 auto", overflow: "visible" }}>
         <div className="card-body">
           {message.text && (
             <div className="alert" style={{ background: message.type === "success" ? "rgba(16,185,129,0.1)" : undefined, borderColor: message.type === "success" ? "var(--accent2)" : undefined, color: message.type === "success" ? "var(--accent2)" : undefined }}>
@@ -64,43 +94,52 @@ export default function BindAccount() {
           )}
 
           <form onSubmit={handleSave} className="grid" style={{ gap: 20 }}>
-            <div className="field">
+            <div className="field" style={{ position: "relative", zIndex: 10 }}>
               <label>Network / Bank Name</label>
-              <select 
-                className="select" 
-                value={network} 
-                onChange={e => setNetwork(e.target.value)} 
-                required 
+              <div 
+                className="input"
+                style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", position: "relative" }}
+                onClick={() => setDropdownOpen(!dropdownOpen)}
               >
-                <option value="" disabled>Select your network...</option>
-                <optgroup label="Tanzania">
-                  <option value="M-Pesa (Vodacom)">M-Pesa (Vodacom)</option>
-                  <option value="Tigo Pesa">Tigo Pesa</option>
-                  <option value="Airtel Money (TZ)">Airtel Money (TZ)</option>
-                  <option value="Halopesa">Halopesa</option>
-                </optgroup>
-                <optgroup label="Zambia">
-                  <option value="MTN Mobile Money">MTN Mobile Money</option>
-                  <option value="Airtel Money (ZM)">Airtel Money (ZM)</option>
-                  <option value="Zamtel">Zamtel</option>
-                </optgroup>
-                <optgroup label="Burundi">
-                  <option value="EcoCash">EcoCash</option>
-                  <option value="Lumicash">Lumicash</option>
-                </optgroup>
-                <optgroup label="Mozambique">
-                  <option value="M-Pesa (MZ)">M-Pesa (MZ)</option>
-                  <option value="e-Mola">e-Mola</option>
-                </optgroup>
-                <optgroup label="Congo">
-                  <option value="M-Pesa (CD)">M-Pesa (CD)</option>
-                  <option value="Airtel Money (CD)">Airtel Money (CD)</option>
-                  <option value="Orange Money">Orange Money</option>
-                </optgroup>
-                <optgroup label="Other">
-                  <option value="Bank Transfer">Bank Transfer</option>
-                </optgroup>
-              </select>
+                {network ? (
+                  <>
+                    <img 
+                      src={availableNetworks.find(n => n.value === network)?.logo || "https://ui-avatars.com/api/?name=Bank&background=random"} 
+                      alt={network} 
+                      style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'contain', background: '#fff' }}
+                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${network}&background=random`; }}
+                    />
+                    {network}
+                  </>
+                ) : (
+                  <span style={{ color: "var(--muted)" }}>Select your network...</span>
+                )}
+                <div style={{ marginLeft: "auto", transition: "transform 0.2s", transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+              </div>
+
+              {dropdownOpen && (
+                <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#050816", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, marginTop: 4, overflowY: "auto", overflowX: "hidden", maxHeight: 200, zIndex: 50, boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+                  {availableNetworks.map(n => (
+                    <div 
+                      key={n.value}
+                      onClick={() => { setNetwork(n.value); setDropdownOpen(false); }}
+                      style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: network === n.value ? "rgba(56, 189, 248, 0.15)" : "transparent" }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(56, 189, 248, 0.25)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = network === n.value ? "rgba(56, 189, 248, 0.15)" : "transparent"}
+                    >
+                      <img 
+                        src={n.logo} 
+                        alt={n.value} 
+                        style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'contain', background: '#fff', padding: 2 }} 
+                        onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${n.value}&background=random`; }}
+                      />
+                      {n.value}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             
             <div className="field">
