@@ -71,6 +71,8 @@ function GlobalActivationModal() {
   let costStr = "500 TZS";
   if (uCountry === "Zambia") costStr = "6 ZMW";
   else if (uCountry === "Burundi") costStr = "575 BIF";
+  else if (uCountry === "Mozambique") costStr = "15 MZN";
+  else if (uCountry === "Congo") costStr = "500 CDF";
   else costStr = "500 TZS"; // Default fallback
 
   const handleCopy = async (text: string) => {

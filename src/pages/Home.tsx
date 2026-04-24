@@ -34,7 +34,7 @@ export default function Home() {
     return <Shell><div className="alert">Loading dashboard...</div></Shell>;
   }
 
-  const currency = userData.country === "Zambia" ? "ZMW" : userData.country === "Burundi" ? "BIF" : "TZS";
+  const currency = userData.country === "Zambia" ? "ZMW" : userData.country === "Burundi" ? "BIF" : userData.country === "Mozambique" ? "MZN" : userData.country === "Congo" ? "CDF" : "TZS";
   const balance = Number(userData.balance || 0).toLocaleString();
   const deposited = Number(userData.deposited || 0).toLocaleString();
   const withdrawn = Number(userData.totalWithdrawn || 0).toLocaleString();

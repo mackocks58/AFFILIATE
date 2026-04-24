@@ -218,7 +218,7 @@ export default function Affiliate() {
                           {r.displayName || "Unknown User"}
                           {r.country && (
                             <img 
-                              src={`https://flagcdn.com/w20/${r.country === "Zambia" ? "zm" : r.country === "Burundi" ? "bi" : "tz"}.png`} 
+                              src={`https://flagcdn.com/w20/${r.country === "Zambia" ? "zm" : r.country === "Burundi" ? "bi" : r.country === "Mozambique" ? "mz" : r.country === "Congo" ? "cd" : "tz"}.png`} 
                               alt={r.country} 
                               title={r.country}
                               style={{ width: 16, height: 'auto', borderRadius: 2 }}

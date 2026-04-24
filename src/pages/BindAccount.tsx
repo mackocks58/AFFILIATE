@@ -88,6 +88,15 @@ export default function BindAccount() {
                   <option value="EcoCash">EcoCash</option>
                   <option value="Lumicash">Lumicash</option>
                 </optgroup>
+                <optgroup label="Mozambique">
+                  <option value="M-Pesa (MZ)">M-Pesa (MZ)</option>
+                  <option value="e-Mola">e-Mola</option>
+                </optgroup>
+                <optgroup label="Congo">
+                  <option value="M-Pesa (CD)">M-Pesa (CD)</option>
+                  <option value="Airtel Money (CD)">Airtel Money (CD)</option>
+                  <option value="Orange Money">Orange Money</option>
+                </optgroup>
                 <optgroup label="Other">
                   <option value="Bank Transfer">Bank Transfer</option>
                 </optgroup>

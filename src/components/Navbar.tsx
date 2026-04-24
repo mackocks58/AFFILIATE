@@ -77,7 +77,7 @@ export function Navbar() {
           <div className="row" style={{ alignItems: "center", gap: 16 }}>
             {userData?.country && (
                <img 
-                 src={`https://flagcdn.com/w40/${userData.country === "Zambia" ? "zm" : userData.country === "Burundi" ? "bi" : "tz"}.png`} 
+                 src={`https://flagcdn.com/w40/${userData.country === "Zambia" ? "zm" : userData.country === "Burundi" ? "bi" : userData.country === "Mozambique" ? "mz" : userData.country === "Congo" ? "cd" : "tz"}.png`} 
                  alt={userData.country} 
                  title={userData.country}
                  style={{ width: 24, height: 'auto', borderRadius: 2 }}

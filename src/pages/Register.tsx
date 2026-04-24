@@ -7,22 +7,38 @@ import { auth, db } from "@/firebase";
 export default function Register() {
   const nav = useNavigate();
   const [params] = useSearchParams();
-  const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [referralCode, setReferralCode] = useState(params.get("ref") || "");
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [country, setCountry] = useState("Tanzania");
+  const [country, setCountry] = useState("");
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const countriesList = [
+    { value: "Tanzania", code: "tz" },
+    { value: "Zambia", code: "zm" },
+    { value: "Burundi", code: "bi" },
+    { value: "Mozambique", code: "mz" },
+    { value: "Congo", code: "cd" }
+  ];
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
     setError(null);
+
+    if (!country) {
+      setError("Please select your country.");
+      setBusy(false);
+      return;
+    }
+
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
-      const parts = name.trim().split(/\s+/);
-      const displayName = parts.length >= 2 ? name.trim() : `${name.trim()} User`;
+      const displayName = username.trim() || "User";
       await updateProfile(cred.user, { displayName });
       
       const newCode = Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -30,9 +46,12 @@ export default function Register() {
       let initialBonus = 15000;
       if (country === "Zambia") initialBonus = 157.5;
       if (country === "Burundi") initialBonus = 17250;
+      if (country === "Mozambique") initialBonus = 400;
+      if (country === "Congo") initialBonus = 15000;
 
       await set(ref(db, `users/${cred.user.uid}`), {
         displayName,
+        username: username.toLowerCase().trim(),
         email: email.trim(),
         affiliateCode: newCode,
         referredBy: referralCode.trim() || null,
@@ -64,7 +83,7 @@ export default function Register() {
       {/* Glowing orb background */}
       <div className="breathe" style={{ position: "absolute", width: 400, height: 400, background: "radial-gradient(circle, rgba(56, 189, 248, 0.12) 0%, transparent 70%)", borderRadius: "50%", zIndex: 0 }}></div>
       
-      <div className="card" style={{ maxWidth: 440, width: "100%", zIndex: 1, border: "1px solid rgba(56, 189, 248, 0.3)", boxShadow: "0 0 50px rgba(56, 189, 248, 0.1)", background: "linear-gradient(180deg, rgba(17, 27, 51, 0.85), rgba(5, 8, 22, 0.95))", backdropFilter: "blur(16px)" }}>
+      <div className="card" style={{ maxWidth: 440, width: "100%", zIndex: 1, border: "1px solid rgba(56, 189, 248, 0.3)", boxShadow: "0 0 50px rgba(56, 189, 248, 0.1)", background: "linear-gradient(180deg, rgba(17, 27, 51, 0.85), rgba(5, 8, 22, 0.95))", backdropFilter: "blur(16px)", overflow: "visible" }}>
         <div className="card-body" style={{ padding: "24px 20px" }}>
             <div style={{ textAlign: "center", marginBottom: 32 }}>
               <div className="animated-star" style={{ width: 64, height: 64, margin: "0 auto 16px" }}>
@@ -81,16 +100,16 @@ export default function Register() {
 
             {error && <div className="alert" style={{ marginBottom: 20 }}>{error}</div>}
             
-            <form className="grid" style={{ gap: 20 }} onSubmit={submit}>
+            <form className="grid" style={{ gap: 12 }} onSubmit={submit}>
               <div className="field">
-                <label htmlFor="name" style={{ color: "var(--text)", opacity: 0.9 }}>Full Name</label>
+                <label htmlFor="username" style={{ color: "var(--text)", opacity: 0.9 }}>Username</label>
                 <input
-                  id="name"
+                  id="username"
                   className="input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  autoComplete="name"
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  autoComplete="username"
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px" }}
                   required
                 />
               </div>
@@ -103,41 +122,72 @@ export default function Register() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px" }}
                   required
                 />
               </div>
               <div className="field">
                 <label htmlFor="password" style={{ color: "var(--text)", opacity: 0.9 }}>Password</label>
-                <input
-                  id="password"
-                  className="input"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  autoComplete="new-password"
-                  minLength={6}
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
-                  required
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="password"
+                    className="input"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    autoComplete="new-password"
+                    minLength={6}
+                    style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 45px 10px 12px", width: "100%" }}
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
+                    <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 16 }}></i>
+                  </button>
+                </div>
               </div>
-              <div className="field">
-                <label htmlFor="country" style={{ color: "var(--text)", opacity: 0.9 }}>Country</label>
-                <select
-                  id="country"
+              <div className="field" style={{ position: "relative" }}>
+                <label style={{ color: "var(--text)", opacity: 0.9 }}>Country</label>
+                <div 
                   className="input"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px", color: "var(--text)" }}
-                  required
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px", color: "var(--text)", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", position: "relative" }}
+                  onClick={() => setDropdownOpen(!dropdownOpen)}
                 >
-                  <option value="Tanzania">Tanzania</option>
-                  <option value="Zambia">Zambia</option>
-                  <option value="Burundi">Burundi</option>
-                </select>
+                  {country ? (
+                    <>
+                      <img 
+                        src={`https://flagcdn.com/w20/${countriesList.find(c => c.value === country)?.code}.png`} 
+                        alt={country} 
+                        style={{ width: 20, height: 'auto', borderRadius: 2 }}
+                      />
+                      {country}
+                    </>
+                  ) : (
+                    <span style={{ color: "var(--muted)" }}>Select your country...</span>
+                  )}
+                  <div style={{ marginLeft: "auto", transition: "transform 0.2s", transform: dropdownOpen ? "rotate(180deg)" : "rotate(0deg)" }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                  </div>
+                </div>
+
+                {dropdownOpen && (
+                  <div style={{ position: "absolute", top: "100%", left: 0, right: 0, background: "#050816", border: "1px solid rgba(56, 189, 248, 0.4)", borderRadius: 12, marginTop: 4, overflowY: "auto", overflowX: "hidden", maxHeight: 140, zIndex: 50, boxShadow: "0 10px 40px rgba(0,0,0,0.5)" }}>
+                    {countriesList.map(c => (
+                      <div 
+                        key={c.value}
+                        onClick={() => { setCountry(c.value); setDropdownOpen(false); }}
+                        style={{ padding: "10px 12px", display: "flex", alignItems: "center", gap: 10, cursor: "pointer", background: country === c.value ? "rgba(56, 189, 248, 0.15)" : "transparent" }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = "rgba(56, 189, 248, 0.25)"}
+                        onMouseLeave={(e) => e.currentTarget.style.background = country === c.value ? "rgba(56, 189, 248, 0.15)" : "transparent"}
+                      >
+                        <img src={`https://flagcdn.com/w20/${c.code}.png`} alt={c.value} style={{ width: 20, height: 'auto', borderRadius: 2 }} />
+                        {c.value}
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              <button className="btn breathe" type="submit" disabled={busy} style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(56,189,248,0.5)", color: "var(--text)", fontWeight: 700, padding: "16px", marginTop: "8px", boxShadow: "0 0 20px rgba(56, 189, 248, 0.15)", fontSize: 16 }}>
+              <button className="btn breathe" type="submit" disabled={busy} style={{ background: "linear-gradient(135deg, rgba(56,189,248,0.15), rgba(161,98,7,0.3))", borderColor: "rgba(56,189,248,0.5)", color: "var(--text)", fontWeight: 700, padding: "12px", marginTop: "4px", boxShadow: "0 0 20px rgba(56, 189, 248, 0.15)", fontSize: 15 }}>
                 {busy ? "Creating…" : "Create Account Securely"}
               </button>
             </form>

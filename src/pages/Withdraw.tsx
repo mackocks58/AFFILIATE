@@ -57,7 +57,7 @@ export default function Withdraw() {
   const availableBalance = Number(userData.balance || 0);
   const bonusBalance = Number(userData.bonus || 0);
   const maxWithdrawable = availableBalance + (bonusUnlocked ? bonusBalance : 0);
-  const currency = userData.country === "Zambia" ? "ZMW" : userData.country === "Burundi" ? "BIF" : "TZS";
+  const currency = userData.country === "Zambia" ? "ZMW" : userData.country === "Burundi" ? "BIF" : userData.country === "Mozambique" ? "MZN" : userData.country === "Congo" ? "CDF" : "TZS";
 
   const handleWithdraw = async (e: React.FormEvent) => {
     e.preventDefault();

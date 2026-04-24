@@ -12,6 +12,7 @@
   --radius: 14px;
   --shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
   font-family: "DM Sans", system-ui, sans-serif;
+  font-size: 13px;
   background: radial-gradient(1200px 600px at 10% -10%, rgba(56, 189, 248, 0.15), transparent),
     radial-gradient(900px 500px at 90% 0%, rgba(202, 138, 4, 0.12), transparent), var(--bg0);
   color: var(--text);

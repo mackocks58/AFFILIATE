@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
-import { auth } from "@/firebase";
+import { auth, db } from "@/firebase";
+import { ref, query, orderByChild, equalTo, get } from "firebase/database";
 
 export default function Login() {
   const nav = useNavigate();
@@ -10,6 +11,7 @@ export default function Login() {
   const [rememberMe, setRememberMe] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,7 +19,22 @@ export default function Login() {
     setError(null);
     try {
       await setPersistence(auth, rememberMe ? browserLocalPersistence : browserSessionPersistence);
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      
+      let loginEmail = email.trim();
+      if (!loginEmail.includes('@')) {
+        const usersRef = ref(db, 'users');
+        const q = query(usersRef, orderByChild('username'), equalTo(loginEmail.toLowerCase()));
+        const snap = await get(q);
+        if (snap.exists()) {
+          const val = snap.val();
+          const uid = Object.keys(val)[0];
+          loginEmail = val[uid].email;
+        } else {
+          throw new Error("Username not found.");
+        }
+      }
+
+      await signInWithEmailAndPassword(auth, loginEmail, password);
       nav("/");
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Could not sign in.");
@@ -48,32 +65,37 @@ export default function Login() {
 
             {error && <div className="alert" style={{ marginBottom: 20 }}>{error}</div>}
             
-            <form className="grid" style={{ gap: 20 }} onSubmit={submit}>
+            <form className="grid" style={{ gap: 12 }} onSubmit={submit}>
               <div className="field">
-                <label htmlFor="email" style={{ color: "var(--text)", opacity: 0.9 }}>Email Address</label>
+                <label htmlFor="email" style={{ color: "var(--text)", opacity: 0.9 }}>Username or Email</label>
                 <input
                   id="email"
                   className="input"
-                  type="email"
-                  autoComplete="email"
+                  type="text"
+                  autoComplete="username"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px" }}
                   required
                 />
               </div>
               <div className="field">
                 <label htmlFor="password" style={{ color: "var(--text)", opacity: 0.9 }}>Password</label>
-                <input
-                  id="password"
-                  className="input"
-                  type="password"
-                  autoComplete="current-password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "14px 16px" }}
-                  required
-                />
+                <div style={{ position: "relative" }}>
+                  <input
+                    id="password"
+                    className="input"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete="current-password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 45px 10px 12px", width: "100%" }}
+                    required
+                  />
+                  <button type="button" onClick={() => setShowPassword(!showPassword)} style={{ position: "absolute", right: 12, top: "50%", transform: "translateY(-50%)", background: "none", border: "none", color: "var(--muted)", cursor: "pointer", display: "flex", alignItems: "center", padding: 0 }}>
+                    <i className={`fa-solid ${showPassword ? "fa-eye-slash" : "fa-eye"}`} style={{ fontSize: 16 }}></i>
+                  </button>
+                </div>
               </div>
               
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
