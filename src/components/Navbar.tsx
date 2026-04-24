@@ -76,9 +76,12 @@ export function Navbar() {
         {user && (
           <div className="row" style={{ alignItems: "center", gap: 16 }}>
             {userData?.country && (
-               <span style={{ fontSize: 24, lineHeight: 1 }} title={userData.country}>
-                 {userData.country === "Zambia" ? "🇿🇲" : userData.country === "Burundi" ? "🇧🇮" : "🇹🇿"}
-               </span>
+               <img 
+                 src={`https://flagcdn.com/w40/${userData.country === "Zambia" ? "zm" : userData.country === "Burundi" ? "bi" : "tz"}.png`} 
+                 alt={userData.country} 
+                 title={userData.country}
+                 style={{ width: 24, height: 'auto', borderRadius: 2 }}
+               />
             )}
             <Link to="/notifications" style={{ position: "relative", display: "flex", alignItems: "center", color: "var(--text)" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
