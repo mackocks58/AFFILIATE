@@ -10,7 +10,7 @@ function linkCls({ isActive }: { isActive: boolean }) {
 }
 
 export function Navbar() {
-  const { user, loading, isAdmin, logout } = useAuth();
+  const { user, userData, loading, isAdmin, logout } = useAuth();
   const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
@@ -75,6 +75,11 @@ export function Navbar() {
         )}
         {user && (
           <div className="row" style={{ alignItems: "center", gap: 16 }}>
+            {userData?.country && (
+               <span style={{ fontSize: 24, lineHeight: 1 }} title={userData.country}>
+                 {userData.country === "Zambia" ? "🇿🇲" : userData.country === "Burundi" ? "🇧🇮" : "🇹🇿"}
+               </span>
+            )}
             <Link to="/notifications" style={{ position: "relative", display: "flex", alignItems: "center", color: "var(--text)" }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path>
