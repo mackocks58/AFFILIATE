@@ -14,34 +14,34 @@ export default function BindAccount() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
 
-  const networkData: Record<string, { value: string, logo: string }[]> = {
+  const networkData: Record<string, { value: string, logo: string, domain: string }[]> = {
     "Tanzania": [
-      { value: "M-Pesa (Vodacom)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Vodacom_Logo.svg/120px-Vodacom_Logo.svg.png" },
-      { value: "Tigo Pesa", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Tigo_logo.svg/120px-Tigo_logo.svg.png" },
-      { value: "Airtel Money (TZ)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Airtel_logo_-_red.png/120px-Airtel_logo_-_red.png" },
-      { value: "Halopesa", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Halotel_Logo.png/120px-Halotel_Logo.png" }
+      { value: "M-Pesa (Vodacom)", logo: "https://logo.clearbit.com/vodacom.co.tz", domain: "vodacom.co.tz" },
+      { value: "Tigo Pesa", logo: "https://logo.clearbit.com/tigo.co.tz", domain: "tigo.co.tz" },
+      { value: "Airtel Money (TZ)", logo: "https://logo.clearbit.com/airtel.co.tz", domain: "airtel.co.tz" },
+      { value: "Halopesa", logo: "https://logo.clearbit.com/halotel.co.tz", domain: "halotel.co.tz" }
     ],
     "Zambia": [
-      { value: "MTN Mobile Money", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/MTN_Logo.svg/120px-MTN_Logo.svg.png" },
-      { value: "Airtel Money (ZM)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Airtel_logo_-_red.png/120px-Airtel_logo_-_red.png" },
-      { value: "Zamtel", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Zamtel_logo.svg/120px-Zamtel_logo.svg.png" }
+      { value: "MTN Mobile Money", logo: "https://logo.clearbit.com/mtn.zm", domain: "mtn.zm" },
+      { value: "Airtel Money (ZM)", logo: "https://logo.clearbit.com/airtel.co.zm", domain: "airtel.co.zm" },
+      { value: "Zamtel", logo: "https://logo.clearbit.com/zamtel.zm", domain: "zamtel.zm" }
     ],
     "Burundi": [
-      { value: "EcoCash", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Econet_Global_Logo.png/120px-Econet_Global_Logo.png" },
-      { value: "Lumicash", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Lumitel_logo.png/120px-Lumitel_logo.png" }
+      { value: "EcoCash", logo: "https://logo.clearbit.com/econet.bi", domain: "econet.bi" },
+      { value: "Lumicash", logo: "https://logo.clearbit.com/lumitel.bi", domain: "lumitel.bi" }
     ],
     "Mozambique": [
-      { value: "M-Pesa (MZ)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Vodacom_Logo.svg/120px-Vodacom_Logo.svg.png" },
-      { value: "e-Mola", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Movitel_logo.svg/120px-Movitel_logo.svg.png" }
+      { value: "M-Pesa (MZ)", logo: "https://logo.clearbit.com/vodacom.co.mz", domain: "vodacom.co.mz" },
+      { value: "e-Mola", logo: "https://logo.clearbit.com/movitel.co.mz", domain: "movitel.co.mz" }
     ],
     "Congo": [
-      { value: "M-Pesa (CD)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Vodacom_Logo.svg/120px-Vodacom_Logo.svg.png" },
-      { value: "Airtel Money (CD)", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Airtel_logo_-_red.png/120px-Airtel_logo_-_red.png" },
-      { value: "Orange Money", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Orange_logo.svg/120px-Orange_logo.svg.png" }
+      { value: "M-Pesa (CD)", logo: "https://logo.clearbit.com/vodacom.cd", domain: "vodacom.cd" },
+      { value: "Airtel Money (CD)", logo: "https://logo.clearbit.com/airtel.cd", domain: "airtel.cd" },
+      { value: "Orange Money", logo: "https://logo.clearbit.com/orange.cd", domain: "orange.cd" }
     ]
   };
 
-  const availableNetworks = networkData[userData?.country || "Tanzania"] || [{ value: "Bank Transfer", logo: "https://ui-avatars.com/api/?name=Bank&background=random" }];
+  const availableNetworks = networkData[userData?.country || "Tanzania"] || [{ value: "Bank Transfer", logo: "https://logo.clearbit.com/bank.com", domain: "bank.com" }];
 
   useEffect(() => {
     if (userData?.withdrawalDetails) {
@@ -105,10 +105,10 @@ export default function BindAccount() {
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", width: "100%" }}>
                     <span>{network}</span>
                     <img 
-                      src={availableNetworks.find(n => n.value === network)?.logo || "https://ui-avatars.com/api/?name=Bank&background=random"} 
+                      src={availableNetworks.find(n => n.value === network)?.logo || "https://www.google.com/s2/favicons?domain=bank.com&sz=128"} 
                       alt={network} 
-                      style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'contain', background: '#fff' }}
-                      onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${network}&background=random`; }}
+                      style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'contain', background: '#fff', padding: 2 }}
+                      onError={(e) => { e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${availableNetworks.find(n => n.value === network)?.domain || 'bank.com'}&sz=128`; e.currentTarget.onerror = null; }}
                     />
                   </div>
                 ) : (
@@ -134,7 +134,7 @@ export default function BindAccount() {
                         src={n.logo} 
                         alt={n.value} 
                         style={{ width: 24, height: 24, borderRadius: '50%', objectFit: 'contain', background: '#fff', padding: 2 }} 
-                        onError={(e) => { e.currentTarget.src = `https://ui-avatars.com/api/?name=${n.value}&background=random`; }}
+                        onError={(e) => { e.currentTarget.src = `https://www.google.com/s2/favicons?domain=${n.domain}&sz=128`; e.currentTarget.onerror = null; }}
                       />
                     </div>
                   ))}
