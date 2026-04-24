@@ -126,14 +126,15 @@ export default function Home() {
 
         {/* Video Earnings Cards */}
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
-          <div className="card breathe" style={{ background: "#ffffff", padding: 24, borderRadius: 24, boxShadow: "0 15px 35px rgba(37, 99, 235, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between", border: "1px solid rgba(37, 99, 235, 0.1)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 56, height: 56, borderRadius: "50%", background: "linear-gradient(135deg, #eff6ff, #dbeafe)", display: "flex", alignItems: "center", justifyContent: "center", color: "#2563eb", fontSize: 24, boxShadow: "inset 0 2px 4px rgba(255,255,255,0.8)" }}>
+          <div className="card breathe" style={{ background: "linear-gradient(90deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 8, 22, 0.95) 100%)", border: "1px solid rgba(16, 185, 129, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 10px 40px rgba(16, 185, 129, 0.25)", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
+            <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", background: "linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)", zIndex: 0 }}></div>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative", zIndex: 1 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10b981", fontSize: 24, boxShadow: "0 0 20px rgba(16, 185, 129, 0.4)" }}>
                 <i className="fa-solid fa-wallet"></i>
               </div>
               <div>
-                <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.1em", color: "#3b82f6", marginBottom: 4, fontWeight: 700 }}>Total Earnings</div>
-                <div style={{ fontSize: 28, fontWeight: 900, color: "#0f172a" }}>{totalEarnings} <span style={{ fontSize: 16, opacity: 0.7, fontWeight: 700, color: "#475569" }}>{currency}</span></div>
+                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#10b981", marginBottom: 4 }}>Total Earnings</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", textShadow: "0 2px 10px rgba(16, 185, 129, 0.3)" }}>{totalEarnings} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
               </div>
             </div>
           </div>
