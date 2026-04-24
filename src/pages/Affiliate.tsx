@@ -214,7 +214,17 @@ export default function Affiliate() {
                   <tbody>
                     {activeList.map((r, i) => (
                       <tr key={r.uid || i}>
-                        <td style={{ fontWeight: 600 }}>{r.displayName || "Unknown User"}</td>
+                        <td style={{ fontWeight: 600, display: "flex", alignItems: "center", gap: 8 }}>
+                          {r.displayName || "Unknown User"}
+                          {r.country && (
+                            <img 
+                              src={`https://flagcdn.com/w20/${r.country === "Zambia" ? "zm" : r.country === "Burundi" ? "bi" : "tz"}.png`} 
+                              alt={r.country} 
+                              title={r.country}
+                              style={{ width: 16, height: 'auto', borderRadius: 2 }}
+                            />
+                          )}
+                        </td>
                         <td className="muted">{r.createdAt ? new Date(r.createdAt).toLocaleDateString() : "N/A"}</td>
                         <td>
                           {r.status === "active" ? (
