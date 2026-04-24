@@ -24,6 +24,11 @@ export default function YouTubeVideos() {
   const targetDay = 5; // 5 = Friday
   const isAvailable = dayOfWeek === targetDay;
   const currentDayName = DAYS[dayOfWeek];
+
+  const country = userData?.country || "Tanzania";
+  const currency = country === "Zambia" ? "ZMW" : country === "Burundi" ? "BIF" : country === "Mozambique" ? "MZN" : country === "Congo" ? "CDF" : "TZS";
+  const rate = country === "Zambia" ? 0.0105 : country === "Burundi" ? 1.15 : country === "Mozambique" ? (400/15000) : 1;
+  const rewardAmount = Number((1000 * rate).toFixed(2));
   
   const getDaysUntil = (target: number) => {
     let diff = target - dayOfWeek;
@@ -96,10 +101,10 @@ export default function YouTubeVideos() {
         
         await update(dbRef, {
           watchedYouTube: watched,
-          youtubeEarnings: currentEarnings + 1000
+          youtubeEarnings: currentEarnings + rewardAmount
         });
         
-        setMessage({ type: "success", text: "Successfully earned 1000 TZS!" });
+        setMessage({ type: "success", text: `Successfully earned ${rewardAmount} ${currency}!` });
         setActiveVideo(null);
       }
     } catch (e: any) {
@@ -132,7 +137,7 @@ export default function YouTubeVideos() {
             <h1 className="page-title" style={{ display: "flex", alignItems: "center", gap: 10 }}>
               <i className="fa-brands fa-youtube" style={{ color: "#ff0000" }}></i> YouTube Videos
             </h1>
-            <p className="muted">Watch and engage with YouTube videos to earn 1000 TZS per video.</p>
+            <p className="muted">Watch and engage with YouTube videos to earn {rewardAmount} {currency} per video.</p>
           </div>
 
           {message.text && (
@@ -165,7 +170,7 @@ export default function YouTubeVideos() {
                 </div>
                 <h3 style={{ fontSize: 16, marginBottom: 8 }}>{vid.title}</h3>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <span style={{ color: "var(--accent2)", fontWeight: 700 }}>Earn 1000 TZS</span>
+                  <span style={{ color: "var(--accent2)", fontWeight: 700 }}>Earn {rewardAmount} {currency}</span>
                   {watched ? (
                     <span style={{ color: "var(--muted)", fontWeight: 600, fontSize: 14 }}><i className="fa-solid fa-check"></i> Watched</span>
                   ) : (
