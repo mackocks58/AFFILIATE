@@ -40,6 +40,12 @@ export default function Home() {
   const withdrawn = Number(userData.totalWithdrawn || 0).toLocaleString();
   const bonus = Number(userData.bonus || 0).toLocaleString();
 
+  const ytEarnings = Number(userData.youtubeEarnings || 0);
+  const ttEarnings = Number(userData.tiktokEarnings || 0);
+  const fbEarnings = Number(userData.facebookEarnings || 0);
+  const totalEarningsVal = Number(userData.balance || 0) + ytEarnings + ttEarnings + fbEarnings;
+  const totalEarnings = totalEarningsVal.toLocaleString();
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -117,6 +123,57 @@ export default function Home() {
             <button onClick={() => setShowMessage(false)} style={{ position: "absolute", top: 12, right: 12, background: "transparent", border: "none", color: "#10b981", fontSize: 16, cursor: "pointer", opacity: 0.7 }}>✕</button>
           </div>
         )}
+
+        {/* Video Earnings Cards */}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
+          <div className="card breathe" style={{ background: "linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(56, 189, 248, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(56, 189, 248, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(56, 189, 248, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#38bdf8", fontSize: 24 }}>
+                <i className="fa-solid fa-wallet"></i>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#38bdf8", marginBottom: 4 }}>Total Earnings</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{totalEarnings} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card breathe" style={{ animationDelay: "0.2s", background: "linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(255, 0, 0, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(255, 0, 0, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255, 0, 0, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff0000", fontSize: 24 }}>
+                <i className="fa-brands fa-youtube"></i>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ff0000", marginBottom: 4 }}>YouTube Earnings</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{ytEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card breathe" style={{ animationDelay: "0.4s", background: "linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(0, 242, 254, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(0, 242, 254, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0, 242, 254, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#00f2fe", fontSize: 24 }}>
+                <i className="fa-brands fa-tiktok"></i>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00f2fe", marginBottom: 4 }}>TikTok Earnings</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{ttEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card breathe" style={{ animationDelay: "0.6s", background: "linear-gradient(135deg, rgba(24, 119, 242, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(24, 119, 242, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(24, 119, 242, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(24, 119, 242, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1877f2", fontSize: 24 }}>
+                <i className="fa-brands fa-facebook"></i>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#1877f2", marginBottom: 4 }}>Facebook Earnings</div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{fbEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Movies Section */}
         <div style={{ marginTop: 8 }}>

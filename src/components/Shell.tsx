@@ -38,6 +38,11 @@ export function Shell({ children }: { children: ReactNode }) {
           <Link to="/affiliate" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 18, fontWeight: 600 }}><i className="fa-solid fa-users" style={{ width: 30, color: "#38bdf8" }}></i> Affiliate</Link>
           <Link to="/weekly-challenge" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 18, fontWeight: 600 }}><i className="fa-solid fa-trophy" style={{ width: 30, color: "var(--accent)" }}></i> Weekly Challenge</Link>
           <Link to="/account" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 18, fontWeight: 600 }}><i className="fa-solid fa-user" style={{ width: 30, color: "var(--muted)" }}></i> My Profile</Link>
+
+          <div style={{ marginTop: 12, marginBottom: 4, color: "var(--muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Tasks Section</div>
+          <Link to="/tasks/youtube" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 16, fontWeight: 500, paddingLeft: 10 }}><i className="fa-brands fa-youtube" style={{ width: 30, color: "#ff0000" }}></i> YouTube Videos</Link>
+          <Link to="/tasks/tiktok" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 16, fontWeight: 500, paddingLeft: 10 }}><i className="fa-brands fa-tiktok" style={{ width: 30, color: "#00f2fe" }}></i> TikTok Videos</Link>
+          <Link to="/tasks/facebook" onClick={() => setSidebarOpen(false)} style={{ color: "var(--text)", textDecoration: "none", fontSize: 16, fontWeight: 500, paddingLeft: 10 }}><i className="fa-brands fa-facebook" style={{ width: 30, color: "#1877f2" }}></i> Facebook Videos</Link>
         </div>
 
         {user && (

@@ -22,6 +22,9 @@ import LiveMatches from "@/pages/LiveMatches";
 import BindAccount from "@/pages/BindAccount";
 import Withdraw from "@/pages/Withdraw";
 import WeeklyChallenge from "@/pages/WeeklyChallenge";
+import YouTubeVideos from "@/pages/YouTubeVideos";
+import TikTokVideos from "@/pages/TikTokVideos";
+import FacebookVideos from "@/pages/FacebookVideos";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 import { useState, useEffect } from "react";
@@ -432,6 +435,9 @@ export default function App() {
         <Route path="/affiliate" element={<ProtectedRoute><Affiliate /></ProtectedRoute>} />
         <Route path="/weekly-challenge" element={<ProtectedRoute><WeeklyChallenge /></ProtectedRoute>} />
         <Route path="/live" element={<ProtectedRoute><LiveMatches /></ProtectedRoute>} />
+        <Route path="/tasks/youtube" element={<ProtectedRoute><YouTubeVideos /></ProtectedRoute>} />
+        <Route path="/tasks/tiktok" element={<ProtectedRoute><TikTokVideos /></ProtectedRoute>} />
+        <Route path="/tasks/facebook" element={<ProtectedRoute><FacebookVideos /></ProtectedRoute>} />
         <Route path="/slip/:id" element={<ProtectedRoute><BetslipDetail /></ProtectedRoute>} />
         <Route path="/login" element={<Login />} />
         <Route path="/forgot-password" element={<ForgotPassword />} />
