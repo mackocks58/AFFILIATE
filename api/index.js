@@ -5,6 +5,8 @@ import { getAdmin } from "./_lib/firebaseAdmin.js";
 import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess, checkPalmpesaStatus } from "./_lib/palmpesa.js";
 import { processFulfillment } from "./_lib/fulfillment.js";
 import crypto from "crypto";
+import helmet from "helmet";
+import rateLimit from "express-rate-limit";
 
 const PORT = Number(process.env.PORT || 8787);
 const app = express();
@@ -18,6 +20,19 @@ app.use(
 
 app.use(express.json({ limit: "512kb" }));
 app.use(express.urlencoded({ extended: true }));
+
+// Security middlewares
+app.use(helmet());
+
+// Apply rate limiting to all requests
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200, // limit each IP to 200 requests per windowMs
+  message: "Too many requests from this IP, please try again after 15 minutes.",
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+app.use(limiter);
 
 app.use((err, req, res, next) => {
   if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {

@@ -77,7 +77,7 @@ export function AdminNotifications() {
       await remove(ref(db, `notifications/${id}`));
       setMsg("Deleted.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not delete.");
+      setErr(getFriendlyErrorMessage(e, "Could not delete."));
     }
   }
 

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { signInWithEmailAndPassword, setPersistence, browserLocalPersistence, browserSessionPersistence } from "firebase/auth";
 import { auth } from "@/firebase";
 import { apiUrl } from "@/lib/apiBase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export default function Login() {
   const nav = useNavigate();
@@ -37,7 +38,7 @@ export default function Login() {
       await signInWithEmailAndPassword(auth, loginEmail, password);
       nav("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not sign in.");
+      setError(getFriendlyErrorMessage(err, "Could not sign in."));
     } finally {
       setBusy(false);
     }

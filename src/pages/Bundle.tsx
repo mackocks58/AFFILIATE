@@ -5,6 +5,7 @@ import { Shell } from "@/components/Shell";
 import { ref, onValue, push, set } from "firebase/database";
 import { auth, db } from "@/firebase";
 import { apiUrl } from "@/lib/apiBase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export default function Bundle() {
   const { user, userData } = useAuth();
@@ -169,7 +170,7 @@ export default function Bundle() {
       });
       setPaymentState("submitted");
     } catch (e: any) {
-      alert("Error submitting request: " + e.message);
+      alert(getFriendlyErrorMessage(e, "Error submitting request."));
     } finally {
       setIsSubmitting(false);
     }

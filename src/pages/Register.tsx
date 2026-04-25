@@ -3,6 +3,7 @@ import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { createUserWithEmailAndPassword, updateProfile } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from "@/firebase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export default function Register() {
   const nav = useNavigate();
@@ -72,7 +73,7 @@ export default function Register() {
 
       nav("/");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not register.");
+      setError(getFriendlyErrorMessage(err, "Could not register."));
     } finally {
       setBusy(false);
     }

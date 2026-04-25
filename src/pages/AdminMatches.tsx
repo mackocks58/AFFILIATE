@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { onValue, push, ref, remove, set, update } from "firebase/database";
 import { db } from "@/firebase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 import { Match } from "./Home";
 
 export function AdminMatches() {

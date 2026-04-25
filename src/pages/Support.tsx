@@ -4,6 +4,7 @@ import { push, ref, serverTimestamp, set } from "firebase/database";
 import { db } from "@/firebase";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/context/AuthContext";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export default function Support() {
   const { user } = useAuth();
@@ -35,7 +36,7 @@ export default function Support() {
       setSubject("");
       setMessage("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not submit ticket.");
+      setError(getFriendlyErrorMessage(err, "Could not submit ticket."));
     } finally {
       setBusy(false);
     }

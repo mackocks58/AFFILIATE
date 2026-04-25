@@ -8,8 +8,8 @@ import { Shell } from "@/components/Shell";
 import { useAuth } from "@/context/AuthContext";
 import { BETTING_COMPANIES } from "@/lib/companies";
 import { resultSymbol } from "@/lib/stats";
-import { storagePathFromDownloadUrl } from "@/lib/storagePath";
 import { AdminMatches } from "./AdminMatches";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 import { AdminNotifications } from "./AdminNotifications";
 import { AdminMovies } from "./AdminMovies";
 import { AdminManualPayments } from "./AdminManualPayments";
@@ -102,7 +102,7 @@ export default function Admin() {
       setCode("");
       setFile(null);
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not create betslip.");
+      setErr(getFriendlyErrorMessage(e, "Could not create betslip."));
     } finally {
       setBusy(false);
     }
@@ -125,7 +125,7 @@ export default function Admin() {
       }
       setMsg("Deleted.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not delete.");
+      setErr(getFriendlyErrorMessage(e, "Could not delete."));
     }
   }
 
@@ -137,7 +137,7 @@ export default function Admin() {
       await update(ref(db, `betslips/${id}`), { result: next, settledAt });
       setMsg("Updated result.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not update.");
+      setErr(getFriendlyErrorMessage(e, "Could not update."));
     }
   }
 
@@ -150,7 +150,7 @@ export default function Admin() {
       await update(ref(db, `betslips/${id}`), { expiresAt });
       setMsg("Updated expiry.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not update expiry.");
+      setErr(getFriendlyErrorMessage(e, "Could not update expiry."));
     }
   }
 
@@ -163,7 +163,7 @@ export default function Admin() {
       await update(ref(db, `betslips/${id}`), { cost: n });
       setMsg("Updated cost.");
     } catch (e: unknown) {
-      setErr(e instanceof Error ? e.message : "Could not update cost.");
+      setErr(getFriendlyErrorMessage(e, "Could not update cost."));
     }
   }
 

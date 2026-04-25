@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { sendPasswordResetEmail } from "firebase/auth";
 import { auth } from "@/firebase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
@@ -19,7 +20,7 @@ export default function ForgotPassword() {
       setSuccess(true);
       setEmail("");
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Could not send reset email.");
+      setError(getFriendlyErrorMessage(err, "Could not send reset email."));
     } finally {
       setBusy(false);
     }

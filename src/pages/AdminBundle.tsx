@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { ref, onValue, push, set, remove, update } from "firebase/database";
-import { ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
-import { db, storage } from "@/firebase";
+import { db } from "@/firebase";
+import { getFriendlyErrorMessage } from "@/lib/errorHandler";
 
 export function AdminBundle() {
   const [tab, setTab] = useState<"slider" | "packages" | "requests">("requests");
@@ -80,8 +80,7 @@ export function AdminBundle() {
       setSliderFile(null);
       setSliderMessage("");
     } catch (e) {
-      console.error(e);
-      alert("Failed to upload slider image");
+      alert(getFriendlyErrorMessage(e, "Failed to upload slider image"));
     } finally {
       setBusySlider(false);
     }
@@ -92,7 +91,7 @@ export function AdminBundle() {
     try {
       await remove(ref(db, `bundles/slider/${id}`));
     } catch (e) {
-      console.error(e);
+      alert(getFriendlyErrorMessage(e, "Failed to delete slider image"));
     }
   }
 
@@ -111,8 +110,7 @@ export function AdminBundle() {
       setPkgAmount("");
       setPkgDetails("");
     } catch (e) {
-      console.error(e);
-      alert("Failed to add package");
+      alert(getFriendlyErrorMessage(e, "Failed to add package"));
     } finally {
       setBusyPkg(false);
     }
@@ -123,7 +121,7 @@ export function AdminBundle() {
     try {
       await remove(ref(db, `bundles/packages/${id}`));
     } catch (e) {
-      console.error(e);
+      alert(getFriendlyErrorMessage(e, "Failed to delete package"));
     }
   }
 
@@ -135,7 +133,7 @@ export function AdminBundle() {
         completedAt: Date.now()
       });
     } catch (e) {
-      console.error(e);
+      alert(getFriendlyErrorMessage(e, "Failed to complete request"));
     }
   }
 
