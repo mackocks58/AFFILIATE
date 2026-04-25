@@ -118,7 +118,7 @@ app.post("/api/checkout/init", async (req, res) => {
       currency = group.currency || "TZS";
       title = group.name;
     } else if (bundleId) {
-      const bundleSnap = await db.ref(`bundles/${bundleId}`).get();
+      const bundleSnap = await db.ref(`bundles/packages/${bundleId}`).get();
       if (!bundleSnap.exists()) return res.status(404).json({ error: "Bundle not found." });
       const bundle = bundleSnap.val();
       
