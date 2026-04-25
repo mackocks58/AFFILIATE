@@ -33,6 +33,7 @@ import TeamAnalysis from "./pages/TeamAnalysis";
 import EarningsAnalysis from "./pages/EarningsAnalysis";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
+import { DevToolsBlocker } from "@/components/DevToolsBlocker";
 import { useState, useEffect } from "react";
 import { auth, db } from "@/firebase";
 import { ref, set } from "firebase/database";
@@ -429,6 +430,7 @@ export default function App() {
 
   return (
     <>
+      <DevToolsBlocker />
       <GlobalFeatures />
       <GlobalActivationModal />
       <Routes>
