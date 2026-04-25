@@ -14,6 +14,9 @@ import { AdminNotifications } from "./AdminNotifications";
 import { AdminMovies } from "./AdminMovies";
 import { AdminManualPayments } from "./AdminManualPayments";
 import { AdminWithdrawals } from "./AdminWithdrawals";
+import { AdminTasksConfig } from "./AdminTasksConfig";
+import { AdminRatesConfig } from "./AdminRatesConfig";
+import { AdminBundle } from "./AdminBundle";
 
 type Row = Betslip & { id: string };
 
@@ -194,13 +197,13 @@ export default function Admin() {
     );
   }
 
-  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments" | "withdrawals">("betslips");
+  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments" | "withdrawals" | "tasks" | "withdraw_config" | "rates" | "bundle">("betslips");
 
   return (
     <Shell>
       <div className="row" style={{ justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
         <h1 className="page-title" style={{ margin: 0 }}>Admin Panel</h1>
-        <div className="row" style={{ gap: 8 }}>
+        <div className="row" style={{ gap: 8, flexWrap: "wrap" }}>
           <button className={`btn ${tab === "betslips" ? "" : "btn-ghost"}`} onClick={() => setTab("betslips")}>
             Betslips
           </button>
@@ -219,6 +222,21 @@ export default function Admin() {
           <button className={`btn ${tab === "withdrawals" ? "" : "btn-ghost"}`} onClick={() => setTab("withdrawals")}>
             Withdrawals
           </button>
+          <button className={`btn ${tab === "withdraw_config" ? "" : "btn-ghost"}`} onClick={() => setTab("withdraw_config")}>
+            Withdraw Config
+          </button>
+          <button className={`btn ${tab === "tasks" ? "" : "btn-ghost"}`} onClick={() => setTab("tasks")}>
+            Tasks Config
+          </button>
+          <button className={`btn ${tab === "rates" ? "" : "btn-ghost"}`} onClick={() => setTab("rates")}>
+            Rates Config
+          </button>
+          <button className={`btn ${tab === "bundle" ? "" : "btn-ghost"}`} onClick={() => setTab("bundle")}>
+            Bundle Config
+          </button>
+          <Link to="/admin/quiz" className="btn btn-ghost">
+            Quiz
+          </Link>
         </div>
       </div>
 
@@ -316,6 +334,14 @@ export default function Admin() {
         <AdminManualPayments />
       ) : tab === "withdrawals" ? (
         <AdminWithdrawals />
+      ) : tab === "withdraw_config" ? (
+        <AdminWithdrawConfig />
+      ) : tab === "tasks" ? (
+        <AdminTasksConfig />
+      ) : tab === "rates" ? (
+        <AdminRatesConfig />
+      ) : tab === "bundle" ? (
+        <AdminBundle />
       ) : (
         <AdminNotifications />
       )}

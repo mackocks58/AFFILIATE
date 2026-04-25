@@ -9,6 +9,7 @@ import ForgotPassword from "@/pages/ForgotPassword";
 import Register from "@/pages/Register";
 import Admin from "@/pages/Admin";
 import PaymentHistory from "@/pages/PaymentHistory";
+import WithdrawHistory from "@/pages/WithdrawHistory";
 import Support from "@/pages/Support";
 import Chat from "@/pages/Chat";
 import PaymentReturn from "@/pages/PaymentReturn";
@@ -25,6 +26,11 @@ import WeeklyChallenge from "@/pages/WeeklyChallenge";
 import YouTubeVideos from "@/pages/YouTubeVideos";
 import TikTokVideos from "@/pages/TikTokVideos";
 import FacebookVideos from "@/pages/FacebookVideos";
+import QuizTask from "@/pages/QuizTask";
+import AdminQuiz from "@/pages/AdminQuiz";
+import Bundle from "@/pages/Bundle";
+import TeamAnalysis from "./pages/TeamAnalysis";
+import EarningsAnalysis from "./pages/EarningsAnalysis";
 import { Shell } from "@/components/Shell";
 import { GlobalFeatures } from "@/components/GlobalFeatures";
 import { useState, useEffect } from "react";
@@ -51,7 +57,7 @@ function ProtectedRoute({ children }: { children: ReactElement }) {
 }
 
 function GlobalActivationModal() {
-  const { user, userData, logout } = useAuth();
+  const { user, userData, exchangeRates, logout } = useAuth();
   const [buyerName, setBuyerName] = useState("");
   const [buyerEmail, setBuyerEmail] = useState("");
   const [phone, setPhone] = useState("");
@@ -71,12 +77,9 @@ function GlobalActivationModal() {
   const uCountry = userData?.country || "Tanzania";
   const isTanzania = uCountry === "Tanzania";
 
-  let costStr = "500 TZS";
-  if (uCountry === "Zambia") costStr = "6 ZMW";
-  else if (uCountry === "Burundi") costStr = "575 BIF";
-  else if (uCountry === "Mozambique") costStr = "15 MZN";
-  else if (uCountry === "Congo") costStr = "500 CDF";
-  else costStr = "500 TZS"; // Default fallback
+  const rate = exchangeRates[uCountry] || 1;
+  const currencyStr = uCountry === "Zambia" ? "ZMW" : uCountry === "Burundi" ? "BIF" : uCountry === "Mozambique" ? "MZN" : uCountry === "Congo" ? "CDF" : "TZS";
+  const costStr = `${Math.ceil(500 * rate)} ${currencyStr}`;
 
   const handleCopy = async (text: string) => {
     try {
@@ -432,6 +435,7 @@ export default function App() {
         <Route path="/" element={<ProtectedRoute><Home /></ProtectedRoute>} />
         <Route path="/bind-account" element={<ProtectedRoute><BindAccount /></ProtectedRoute>} />
         <Route path="/withdraw" element={<ProtectedRoute><Withdraw /></ProtectedRoute>} />
+        <Route path="/withdraw-history" element={<ProtectedRoute><WithdrawHistory /></ProtectedRoute>} />
         <Route path="/affiliate" element={<ProtectedRoute><Affiliate /></ProtectedRoute>} />
         <Route path="/weekly-challenge" element={<ProtectedRoute><WeeklyChallenge /></ProtectedRoute>} />
         <Route path="/live" element={<ProtectedRoute><LiveMatches /></ProtectedRoute>} />
@@ -452,6 +456,18 @@ export default function App() {
         <Route path="/payment/cancel" element={<PaymentCancel />} />
         <Route path="/movies" element={<ProtectedRoute><Movies /></ProtectedRoute>} />
         <Route path="/movies/:groupId" element={<ProtectedRoute><MovieGroupDetail /></ProtectedRoute>} />
+        <Route path="/quiz" element={<ProtectedRoute><QuizTask /></ProtectedRoute>} />
+        <Route path="/bundle" element={<ProtectedRoute><Bundle /></ProtectedRoute>} />
+        <Route path="/team-analysis" element={<ProtectedRoute><TeamAnalysis /></ProtectedRoute>} />
+        <Route path="/earnings-analysis" element={<ProtectedRoute><EarningsAnalysis /></ProtectedRoute>} />
+        <Route
+          path="/admin/quiz"
+          element={
+            <AdminRoute>
+              <AdminQuiz />
+            </AdminRoute>
+          }
+        />
         <Route
           path="/admin"
           element={

@@ -2,13 +2,14 @@ import { Link } from "react-router-dom";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/context/AuthContext";
 import { useState, useEffect } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, query, orderByChild, equalTo, get } from "firebase/database";
 import { db } from "@/firebase";
 
 export default function Account() {
-  const { user, isAdmin, logout } = useAuth();
+  const { user, userData, isAdmin, logout } = useAuth();
   const [following, setFollowing] = useState<string[]>([]);
   const [channels, setChannels] = useState<string[]>([]);
+  const [uplinerName, setUplinerName] = useState<string | null>("Loading...");
 
   useEffect(() => {
     if (!user) return;
@@ -40,6 +41,33 @@ export default function Account() {
       channelsSub();
     };
   }, [user]);
+
+  useEffect(() => {
+    if (!userData?.referredBy) {
+      setUplinerName("None");
+      return;
+    }
+    
+    const fetchUpliner = async () => {
+      try {
+        const usersRef = ref(db, "users");
+        const q = query(usersRef, orderByChild("affiliateCode"), equalTo(userData.referredBy));
+        const snap = await get(q);
+        if (snap.exists()) {
+          const val = snap.val();
+          const firstKey = Object.keys(val)[0];
+          const uData = val[firstKey];
+          setUplinerName(uData.displayName || uData.username || "Unknown User");
+        } else {
+          setUplinerName("Unknown User");
+        }
+      } catch (err) {
+        setUplinerName("Unknown User");
+      }
+    };
+    
+    fetchUpliner();
+  }, [userData?.referredBy]);
 
   if (!user) {
     return (
@@ -92,10 +120,19 @@ export default function Account() {
               </div>
             </div>
 
-            <div className="field" style={{ marginBottom: 20 }}>
+            <div className="field" style={{ marginBottom: 16 }}>
               <label>User ID</label>
               <div className="input mono" style={{ background: "rgba(5, 8, 22, 0.7)", padding: "12px 16px", fontSize: 13, color: "var(--muted)" }}>
                 {user.uid}
+              </div>
+            </div>
+
+            <div className="field" style={{ marginBottom: 20 }}>
+              <label>Upliner (Invited By)</label>
+              <div className="input" style={{ background: "rgba(5, 8, 22, 0.7)", padding: "12px 16px", fontSize: 15, display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ color: "var(--accent)", fontSize: 18 }}>🤝</span>
+                <span style={{ fontWeight: 600 }}>{uplinerName}</span>
+                {userData?.referredBy && <span className="badge" style={{ fontSize: 10, padding: "2px 6px" }}>{userData.referredBy}</span>}
               </div>
             </div>
 

@@ -47,10 +47,12 @@ export function AdminWithdrawals() {
       }
       totalWithdrawn += Number(w.amount);
 
-      await update(ref(db), {
-        [`withdrawals/${w.id}/status`]: "completed",
-        [`withdrawals/${w.id}/processedAt`]: Date.now(),
-        [`users/${w.uid}/totalWithdrawn`]: totalWithdrawn
+      await update(ref(db, `withdrawals/${w.id}`), {
+        status: "completed",
+        processedAt: Date.now()
+      });
+      await update(ref(db, `users/${w.uid}`), {
+        totalWithdrawn: totalWithdrawn
       });
       darkSwal.fire('Approved!', 'The withdrawal has been processed.', 'success');
     } catch (e: any) {
@@ -73,16 +75,19 @@ export function AdminWithdrawals() {
     setBusy(w.id);
     try {
       const uSnap = await get(ref(db, `users/${w.uid}`));
-      let balance = 0;
+      const field = w.walletField || "balance";
+      let val = 0;
       if (uSnap.exists()) {
-         balance = Number(uSnap.val().balance || 0);
+         val = Number(uSnap.val()[field] || 0);
       }
-      balance += Number(w.amount);
+      val += Number(w.amount);
 
-      await update(ref(db), {
-        [`withdrawals/${w.id}/status`]: "rejected",
-        [`withdrawals/${w.id}/processedAt`]: Date.now(),
-        [`users/${w.uid}/balance`]: balance
+      await update(ref(db, `withdrawals/${w.id}`), {
+        status: "rejected",
+        processedAt: Date.now()
+      });
+      await update(ref(db, `users/${w.uid}`), {
+        [field]: val
       });
       darkSwal.fire('Rejected', 'Funds have been refunded.', 'success');
     } catch (e: any) {
@@ -172,6 +177,7 @@ export function AdminWithdrawals() {
                     <td>
                       <div><strong>{w.amount}</strong> <span style={{ fontSize: 12 }}>{w.currency}</span></div>
                       <div className="muted" style={{ fontSize: 12 }}>Tax (13%): -{tax.toFixed(2)}</div>
+                      {w.walletLabel && <div style={{ fontSize: 11, color: "var(--accent)", marginTop: 4 }}>From: {w.walletLabel}</div>}
                     </td>
                     <td>
                       <strong style={{ color: "#10b981", fontSize: 16 }}>{afterTax.toFixed(2)}</strong> <span style={{ fontSize: 12, opacity: 0.7 }}>{w.currency}</span>

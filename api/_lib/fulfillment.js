@@ -24,11 +24,22 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
       });
       console.log(`Purchase completed for user ${uid}, movie group ${session.movieGroupId}`);
       return true;
+    } else if (session.bundleId) {
+      await db.ref(`purchases/${uid}/bundles/${session.bundleId}_${actualOrderId}`).set({
+        status: "completed",
+        paidAt: Date.now(),
+        amount: session.amount || 0,
+        orderId: actualOrderId,
+        reference: reference ?? null,
+      });
+      console.log(`Purchase completed for user ${uid}, bundle ${session.bundleId}`);
+      return true;
     } else if (session.activationPayment) {
       console.log(`Processing activation payment for ${uid}`);
       // First explicitly activate the user and wait for it
       await db.ref(`users/${uid}`).update({
-        status: "active"
+        status: "active",
+        activationDate: Date.now()
       });
       console.log(`User ${uid} successfully activated.`);
 
@@ -41,7 +52,12 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
           const referralCountry = userData.country || "Tanzania";
           
           const percentages = [0.45, 0.15, 0.01]; // Level 1, 2, 3
-          const exchangeRatesToTZS = { "Tanzania": 1, "Zambia": 0.0105, "Burundi": 1.15 };
+          
+          let exchangeRatesToTZS = { "Tanzania": 1, "Zambia": 0.0105, "Burundi": 1.15 };
+          const ratesSnap = await db.ref("settings/exchangeRates").get();
+          if (ratesSnap.exists()) {
+            exchangeRatesToTZS = { ...exchangeRatesToTZS, ...ratesSnap.val() };
+          }
           
           const referralRateToTZS = exchangeRatesToTZS[referralCountry] || 1;
           const amountInTZS = session.amount / referralRateToTZS;

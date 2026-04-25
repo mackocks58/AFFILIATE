@@ -28,14 +28,14 @@
       ".indexOn": ["uid"],
       ".read": "auth != null",
       "$id": {
-        ".write": "auth != null && (newData.child('uid').val() === auth.uid || data.child('uid').val() === auth.uid)"
+        ".write": "auth != null && (auth.token.admin === true || newData.child('uid').val() === auth.uid || data.child('uid').val() === auth.uid)"
       }
     },
     "manualPayments": {
       ".indexOn": ["uid", "status"],
       ".read": "auth != null",
       "$id": {
-        ".write": "auth != null && (newData.child('uid').val() === auth.uid || data.child('uid').val() === auth.uid)"
+        ".write": "auth != null && (auth.token.admin === true || newData.child('uid').val() === auth.uid || data.child('uid').val() === auth.uid)"
       }
     },
     "userPayments": {
@@ -53,15 +53,34 @@
       }
     },
     "users": {
+      ".read": "auth != null",
       ".indexOn": ["affiliateCode", "referredBy", "username"],
+      "$uid": {
+        ".write": "auth != null && (auth.token.admin === true || auth.uid === $uid)"
+      }
+    },
+    "commissions": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid"
+      }
+    },
+    "settings": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "quizzes": {
+      ".read": "auth != null",
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "userQuizzes": {
       "$uid": {
         ".read": "auth != null",
         ".write": "auth != null && auth.uid === $uid"
       }
     },
     "referrals": {
+      ".read": "auth != null",
       "$code": {
-        ".read": "auth != null && root.child('users').child(auth.uid).child('affiliateCode').val() === $code",
         ".write": "auth != null"
       }
     },
@@ -89,6 +108,16 @@
       "$uid": {
         ".read": "auth != null && auth.uid === $uid",
         ".write": "auth != null && auth.uid === $uid"
+      }
+    },
+    "bundles": {
+      ".read": true,
+      ".write": "auth != null && auth.token.admin === true"
+    },
+    "bundleRequests": {
+      ".read": "auth != null",
+      "$id": {
+        ".write": "auth != null && (auth.token.admin === true || newData.child('uid').val() === auth.uid)"
       }
     }
   }

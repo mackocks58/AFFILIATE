@@ -75,9 +75,9 @@ function paymentSuccess(payload) {
 app.post("/api/checkout/init", async (req, res) => {
   try {
     const admin = getAdmin();
-    const { idToken, betslipId, movieGroupId, buyer, activationPayment } = req.body || {};
+    const { idToken, betslipId, movieGroupId, buyer, activationPayment, bundleId } = req.body || {};
     
-    if (!idToken || (!betslipId && !movieGroupId && !activationPayment) || !buyer?.name || !buyer?.email || !buyer?.phone) {
+    if (!idToken || (!betslipId && !movieGroupId && !activationPayment && !bundleId) || !buyer?.name || !buyer?.email || !buyer?.phone) {
       return res.status(400).json({ error: "Missing required details." });
     }
 
@@ -117,18 +117,35 @@ app.post("/api/checkout/init", async (req, res) => {
       cost = Number(group.amount);
       currency = group.currency || "TZS";
       title = group.name;
+    } else if (bundleId) {
+      const bundleSnap = await db.ref(`bundles/${bundleId}`).get();
+      if (!bundleSnap.exists()) return res.status(404).json({ error: "Bundle not found." });
+      const bundle = bundleSnap.val();
+      
+      cost = Number(bundle.amount);
+      currency = bundle.currency || "TZS";
+      title = `Bundle: ${bundle.description}`;
     } else if (activationPayment) {
       const uSnap = await db.ref(`users/${uid}`).get();
       const uCountry = uSnap.exists() ? uSnap.val().country || "Tanzania" : "Tanzania";
+      const ratesSnap = await db.ref("settings/exchangeRates").get();
+      let exchangeRatesToTZS = { "Tanzania": 1, "Zambia": 0.0105, "Burundi": 1.15, "Mozambique": 0.02666, "Congo": 1 };
+      if (ratesSnap.exists()) {
+        exchangeRatesToTZS = { ...exchangeRatesToTZS, ...ratesSnap.val() };
+      }
+      
+      const rate = exchangeRatesToTZS[uCountry] || 1;
+      cost = Math.ceil(500 * rate);
       
       if (uCountry === "Zambia") {
-        cost = Math.ceil(500 * 0.0105); // 500 * 0.0105 ≈ 6
         currency = "ZMW";
       } else if (uCountry === "Burundi") {
-        cost = 500 * 1.15; // 575
         currency = "BIF";
+      } else if (uCountry === "Mozambique") {
+        currency = "MZN";
+      } else if (uCountry === "Congo") {
+        currency = "CDF";
       } else {
-        cost = 500;
         currency = "TZS";
       }
       title = "Account Activation";
@@ -150,6 +167,7 @@ app.post("/api/checkout/init", async (req, res) => {
       uid,
       betslipId: betslipId || null,
       movieGroupId: movieGroupId || null,
+      bundleId: bundleId || null,
       activationPayment: activationPayment || false,
       amount: cost,
       currency,
@@ -200,7 +218,7 @@ app.post("/api/checkout/init", async (req, res) => {
 
     if (palmpesaResp?.order_id) {
       await db.ref(`checkoutSessions/${palmpesaResp.order_id}`).set({
-        aliasFor: orderId, uid, betslipId: betslipId || null, movieGroupId: movieGroupId || null, activationPayment: activationPayment || false, amount: cost, currency
+        aliasFor: orderId, uid, betslipId: betslipId || null, movieGroupId: movieGroupId || null, bundleId: bundleId || null, activationPayment: activationPayment || false, amount: cost, currency
       });
     }
 

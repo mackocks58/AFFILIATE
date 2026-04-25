@@ -43,9 +43,10 @@ export default function Home() {
   const ytEarnings = Number(userData.youtubeEarnings || 0);
   const ttEarnings = Number(userData.tiktokEarnings || 0);
   const fbEarnings = Number(userData.facebookEarnings || 0);
-  const totalEarningsVal = Number(userData.balance || 0) + ytEarnings + ttEarnings + fbEarnings;
+  const quizEarnings = Number(userData.quizEarnings || 0);
+  const commissionTotal = Number(userData.commissionTotal || 0);
+  const totalEarningsVal = ytEarnings + ttEarnings + fbEarnings + quizEarnings + commissionTotal;
   const totalEarnings = totalEarningsVal.toLocaleString();
-
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return "Good morning";
@@ -58,19 +59,19 @@ export default function Home() {
 
   return (
     <Shell>
-      <div style={{ marginBottom: 32, padding: "16px 0", textAlign: "center" }}>
+      <div style={{ marginBottom: 16, padding: "8px 0", textAlign: "center" }}>
         <h1 className="page-title" style={{ display: "inline-flex", alignItems: "center", gap: 10, margin: "0 0 8px 0" }}>
           {getGreeting()}, <span style={{ color: "var(--accent)" }}>{firstName}</span> <span className="wave" style={{ display: "inline-block", transformOrigin: "70% 70%" }}>👋</span>
         </h1>
         <p className="muted" style={{ margin: 0 }}>Welcome to your dashboard!</p>
       </div>
 
-      <div className="grid" style={{ gap: 24 }}>
+      <div className="grid" style={{ gap: 16 }}>
         {/* Main Balance Card */}
         <div className="card" style={{ 
           background: "linear-gradient(135deg, rgba(250, 204, 21, 0.08), rgba(5, 8, 22, 0.95))", 
           border: "2px solid rgba(250, 204, 21, 0.3)", 
-          padding: "20px 20px", 
+          padding: "16px", 
           textAlign: "center", 
           borderRadius: 24, 
           boxShadow: "0 12px 40px rgba(250, 204, 21, 0.15), inset 0 0 30px rgba(250, 204, 21, 0.1)", 
@@ -84,30 +85,38 @@ export default function Home() {
           
           <div style={{ position: "relative", zIndex: 1 }}>
             <div style={{ fontSize: 13, textTransform: "uppercase", letterSpacing: "0.15em", color: "#eab308", fontWeight: 800, marginBottom: 4 }}>Available Balance</div>
-            <div style={{ fontSize: 40, fontWeight: 900, color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+            <div style={{ fontSize: 36, fontWeight: 900, color: "var(--text)", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
               <span>{showBalance ? balance : "****"}</span>
-              <span style={{ fontSize: 18, opacity: 0.6, fontWeight: 700 }}>{currency}</span>
+              <span style={{ fontSize: 16, opacity: 0.6, fontWeight: 700 }}>{currency}</span>
               <button onClick={() => setShowBalance(!showBalance)} style={{ background: "transparent", border: "none", color: "var(--text)", opacity: 0.6, cursor: "pointer", fontSize: 20, display: "flex", alignItems: "center", marginLeft: 8 }}>
                 <i className={`fa-solid ${showBalance ? "fa-eye-slash" : "fa-eye"}`}></i>
               </button>
             </div>
-            <div style={{ marginTop: 16, display: "flex", gap: 16, justifyContent: "center" }}>
-              <Link to="/withdraw" className="btn breathe" style={{ padding: "12px 32px", fontSize: 15, borderRadius: 999, background: "linear-gradient(135deg, #facc15, #eab308)", color: "#0f172a", border: "none", boxShadow: "0 8px 24px rgba(250, 204, 21, 0.4)", fontWeight: 800 }}>Withdraw Funds</Link>
+            
+            <div style={{ width: "70%", height: 1, background: "linear-gradient(90deg, transparent, rgba(250, 204, 21, 0.3), transparent)", margin: "10px auto" }}></div>
+            
+            <div style={{ display: "flex", justifyContent: "center", alignItems: "baseline", gap: 8, marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "var(--muted)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em" }}>Total Earnings:</div>
+              <div style={{ fontSize: 15, color: "var(--text)", fontWeight: 800 }}>{showBalance ? totalEarnings : "****"} <span style={{ fontSize: 11, opacity: 0.7 }}>{currency}</span></div>
+            </div>
+
+            <div style={{ display: "flex", gap: 16, justifyContent: "center" }}>
+              <Link to="/withdraw" className="btn breathe" style={{ padding: "8px 24px", fontSize: 14, borderRadius: 999, background: "linear-gradient(135deg, #facc15, #eab308)", color: "#0f172a", border: "none", boxShadow: "0 8px 24px rgba(250, 204, 21, 0.4)", fontWeight: 800 }}>Withdraw Funds</Link>
             </div>
           </div>
         </div>
 
         {/* Two smaller cards in one row */}
         <div style={{ display: "flex", gap: 16, width: "100%" }}>
-          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(239, 68, 68, 0.5)", padding: 20, textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(239, 68, 68, 0.15)" }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ef4444", marginBottom: 4 }}>Total Withdrawn</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{withdrawn} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(239, 68, 68, 0.5)", padding: "12px 16px", textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(239, 68, 68, 0.15)" }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ef4444", marginBottom: 4 }}>Total Withdrawn</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{withdrawn} <span style={{ fontSize: 12, opacity: 0.7 }}>{currency}</span></div>
           </div>
 
-          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(16, 185, 129, 0.5)", padding: 20, textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(16, 185, 129, 0.15)", position: "relative", overflow: "hidden" }}>
-            <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#10b981", marginBottom: 4 }}>Registration Bonus</div>
-            <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{bonus} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
-            <div style={{ fontSize: 11, color: "var(--muted)", marginTop: 8 }}>
+          <div className="card breathe" style={{ flex: 1, background: "linear-gradient(135deg, rgba(16, 185, 129, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(16, 185, 129, 0.5)", padding: "12px 16px", textAlign: "center", borderRadius: 20, boxShadow: "0 0 30px rgba(16, 185, 129, 0.15)", position: "relative", overflow: "hidden" }}>
+            <div style={{ fontSize: 11, textTransform: "uppercase", letterSpacing: "0.05em", color: "#10b981", marginBottom: 4 }}>Registration Bonus</div>
+            <div style={{ fontSize: 20, fontWeight: 800, color: "var(--text)" }}>{bonus} <span style={{ fontSize: 12, opacity: 0.7 }}>{currency}</span></div>
+            <div style={{ fontSize: 10, color: "var(--muted)", marginTop: 4 }}>
               {activeReferrals >= 30 ? <span style={{ color: "var(--accent)" }}>Unlocked!</span> : `Need ${30 - activeReferrals} more active referrals to withdraw.`}
             </div>
           </div>
@@ -128,49 +137,109 @@ export default function Home() {
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginTop: 8 }}>
           <div className="card breathe" style={{ background: "linear-gradient(90deg, rgba(16, 185, 129, 0.35) 0%, rgba(5, 8, 22, 0.95) 100%)", border: "1px solid rgba(16, 185, 129, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 10px 40px rgba(16, 185, 129, 0.25)", display: "flex", alignItems: "center", justifyContent: "space-between", position: "relative", overflow: "hidden" }}>
             <div style={{ position: "absolute", top: 0, left: 0, bottom: 0, width: "40%", background: "linear-gradient(90deg, rgba(16, 185, 129, 0.15) 0%, transparent 100%)", zIndex: 0 }}></div>
-            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative", zIndex: 1 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10b981", fontSize: 24, boxShadow: "0 0 20px rgba(16, 185, 129, 0.4)" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, position: "relative", zIndex: 1, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(16, 185, 129, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#10b981", fontSize: 24, boxShadow: "0 0 20px rgba(16, 185, 129, 0.4)" }}>
                 <i className="fa-solid fa-wallet"></i>
               </div>
-              <div>
-                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#10b981", marginBottom: 4 }}>Total Earnings</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#10b981", marginBottom: 4 }}>Total Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>100%</div>
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)", textShadow: "0 2px 10px rgba(16, 185, 129, 0.3)" }}>{totalEarnings} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(16, 185, 129, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: "100%", height: "100%", background: "linear-gradient(90deg, #10b981, #34d399)", borderRadius: 3, boxShadow: "0 0 10px rgba(16,185,129,0.5)" }}></div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="card breathe" style={{ animationDelay: "0.2s", background: "linear-gradient(135deg, rgba(255, 0, 0, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(255, 0, 0, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(255, 0, 0, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(255, 0, 0, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff0000", fontSize: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(255, 0, 0, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#ff0000", fontSize: 24 }}>
                 <i className="fa-brands fa-youtube"></i>
               </div>
-              <div>
-                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ff0000", marginBottom: 4 }}>YouTube Earnings</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#ff0000", marginBottom: 4 }}>YouTube Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>{totalEarningsVal > 0 ? Math.round((ytEarnings / totalEarningsVal) * 100) : 0}%</div>
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{ytEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(255, 0, 0, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${totalEarningsVal > 0 ? (ytEarnings / totalEarningsVal) * 100 : 0}%`, height: "100%", background: "linear-gradient(90deg, #ff0000, #ff4d4d)", borderRadius: 3, boxShadow: "0 0 10px rgba(255,0,0,0.5)" }}></div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="card breathe" style={{ animationDelay: "0.4s", background: "linear-gradient(135deg, rgba(0, 242, 254, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(0, 242, 254, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(0, 242, 254, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(0, 242, 254, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#00f2fe", fontSize: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(0, 242, 254, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#00f2fe", fontSize: 24 }}>
                 <i className="fa-brands fa-tiktok"></i>
               </div>
-              <div>
-                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00f2fe", marginBottom: 4 }}>TikTok Earnings</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#00f2fe", marginBottom: 4 }}>TikTok Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>{totalEarningsVal > 0 ? Math.round((ttEarnings / totalEarningsVal) * 100) : 0}%</div>
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{ttEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(0, 242, 254, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${totalEarningsVal > 0 ? (ttEarnings / totalEarningsVal) * 100 : 0}%`, height: "100%", background: "linear-gradient(90deg, #00f2fe, #4facfe)", borderRadius: 3, boxShadow: "0 0 10px rgba(0,242,254,0.5)" }}></div>
+                </div>
               </div>
             </div>
           </div>
 
           <div className="card breathe" style={{ animationDelay: "0.6s", background: "linear-gradient(135deg, rgba(24, 119, 242, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(24, 119, 242, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(24, 119, 242, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-              <div style={{ width: 48, height: 48, borderRadius: "50%", background: "rgba(24, 119, 242, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1877f2", fontSize: 24 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(24, 119, 242, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#1877f2", fontSize: 24 }}>
                 <i className="fa-brands fa-facebook"></i>
               </div>
-              <div>
-                <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#1877f2", marginBottom: 4 }}>Facebook Earnings</div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#1877f2", marginBottom: 4 }}>Facebook Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>{totalEarningsVal > 0 ? Math.round((fbEarnings / totalEarningsVal) * 100) : 0}%</div>
+                </div>
                 <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{fbEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(24, 119, 242, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${totalEarningsVal > 0 ? (fbEarnings / totalEarningsVal) * 100 : 0}%`, height: "100%", background: "linear-gradient(90deg, #1877f2, #4791f5)", borderRadius: 3, boxShadow: "0 0 10px rgba(24,119,242,0.5)" }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card breathe" style={{ animationDelay: "0.8s", background: "linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(245, 158, 11, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(245, 158, 11, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(245, 158, 11, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#f59e0b", fontSize: 24 }}>
+                <i className="fa-solid fa-clipboard-question"></i>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#f59e0b", marginBottom: 4 }}>Quiz Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>{totalEarningsVal > 0 ? Math.round((quizEarnings / totalEarningsVal) * 100) : 0}%</div>
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{quizEarnings.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(245, 158, 11, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${totalEarningsVal > 0 ? (quizEarnings / totalEarningsVal) * 100 : 0}%`, height: "100%", background: "linear-gradient(90deg, #f59e0b, #fbbf24)", borderRadius: 3, boxShadow: "0 0 10px rgba(245,158,11,0.5)" }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="card breathe" style={{ animationDelay: "1.0s", background: "linear-gradient(135deg, rgba(139, 92, 246, 0.2), rgba(5, 8, 22, 0.95))", border: "1px solid rgba(139, 92, 246, 0.5)", padding: 20, borderRadius: 20, boxShadow: "0 0 30px rgba(139, 92, 246, 0.15)", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 16, width: "100%" }}>
+              <div style={{ width: 48, height: 48, minWidth: 48, borderRadius: "50%", background: "rgba(139, 92, 246, 0.2)", display: "flex", alignItems: "center", justifyContent: "center", color: "#8b5cf6", fontSize: 24 }}>
+                <i className="fa-solid fa-users-viewfinder"></i>
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div style={{ fontSize: 12, textTransform: "uppercase", letterSpacing: "0.05em", color: "#8b5cf6", marginBottom: 4 }}>Commission Earnings</div>
+                  <div style={{ fontSize: 12, color: "rgba(255,255,255,0.5)", fontWeight: "bold" }}>{totalEarningsVal > 0 ? Math.round((commissionTotal / totalEarningsVal) * 100) : 0}%</div>
+                </div>
+                <div style={{ fontSize: 24, fontWeight: 800, color: "var(--text)" }}>{commissionTotal.toLocaleString()} <span style={{ fontSize: 14, opacity: 0.7 }}>{currency}</span></div>
+                <div style={{ width: "100%", height: 6, background: "rgba(139, 92, 246, 0.1)", borderRadius: 3, marginTop: 8, overflow: "hidden" }}>
+                  <div style={{ width: `${totalEarningsVal > 0 ? (commissionTotal / totalEarningsVal) * 100 : 0}%`, height: "100%", background: "linear-gradient(90deg, #8b5cf6, #a78bfa)", borderRadius: 3, boxShadow: "0 0 10px rgba(139,92,246,0.5)" }}></div>
+                </div>
               </div>
             </div>
           </div>

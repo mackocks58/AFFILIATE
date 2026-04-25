@@ -12,30 +12,43 @@ const VIDEOS = [
 ];
 
 export default function FacebookVideos() {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, loading, exchangeRates } = useAuth();
   const [activeVideo, setActiveVideo] = useState<{id: string, title: string} | null>(null);
   const [timeLeft, setTimeLeft] = useState(60);
   const [busy, setBusy] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [taskConfig, setTaskConfig] = useState<{ allowedDays: number[], baseReward: number } | null>(null);
+
+  useEffect(() => {
+    get(ref(db, "settings/tasks/facebook")).then(snap => {
+      if (snap.exists()) setTaskConfig(snap.val());
+      else setTaskConfig({ allowedDays: [4], baseReward: 500 });
+    });
+  }, []);
 
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayOfWeek = new Date().getDay();
-  const targetDay = 6; // 6 = Saturday
-  const isAvailable = dayOfWeek === targetDay;
+  const allowedDays = taskConfig?.allowedDays || [4];
+  const isAvailable = allowedDays.includes(dayOfWeek);
   const currentDayName = DAYS[dayOfWeek];
 
   const country = userData?.country || "Tanzania";
   const currency = country === "Zambia" ? "ZMW" : country === "Burundi" ? "BIF" : country === "Mozambique" ? "MZN" : country === "Congo" ? "CDF" : "TZS";
-  const rate = country === "Zambia" ? 0.0105 : country === "Burundi" ? 1.15 : country === "Mozambique" ? (400/15000) : 1;
-  const rewardAmount = Number((500 * rate).toFixed(2));
+  const rate = exchangeRates[country] || 1;
+  const rewardAmount = Number(((taskConfig?.baseReward || 500) * rate).toFixed(2));
   
-  const getDaysUntil = (target: number) => {
-    let diff = target - dayOfWeek;
-    if (diff <= 0) diff += 7;
-    return diff;
+  const getDaysUntil = () => {
+    if (allowedDays.length === 0) return -1;
+    let minDiff = 7;
+    for (const target of allowedDays) {
+      let diff = target - dayOfWeek;
+      if (diff <= 0) diff += 7;
+      if (diff < minDiff) minDiff = diff;
+    }
+    return minDiff;
   };
-  const daysRemaining = getDaysUntil(targetDay);
+  const daysRemaining = getDaysUntil();
 
   useEffect(() => {
     let timer: any;
@@ -113,7 +126,7 @@ export default function FacebookVideos() {
 
   return (
     <Shell>
-      {loading || !userData ? (
+      {loading || !userData || !taskConfig ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
           <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 40, color: "var(--accent)" }}></i>
         </div>
@@ -135,11 +148,17 @@ export default function FacebookVideos() {
           {!isAvailable && (
             <div className="card" style={{ padding: 32, textAlign: "center", border: "1px solid rgba(24, 119, 242, 0.3)", background: "rgba(24,119,242,0.05)" }}>
               <i className="fa-brands fa-facebook" style={{ fontSize: 48, color: "#1877f2", marginBottom: 16 }}></i>
-              <h2>Available on Saturdays Only</h2>
+              <h2>Available on {allowedDays.map(d => DAYS[d]).join(", ")}</h2>
               <p className="muted" style={{ fontSize: 16 }}>Today is <strong>{currentDayName}</strong>.</p>
               <div style={{ marginTop: 16, display: "inline-block", background: "rgba(24,119,242,0.1)", padding: "12px 24px", borderRadius: 12, border: "1px solid rgba(24,119,242,0.2)" }}>
-                <span style={{ fontSize: 24, fontWeight: 800, color: "#1877f2" }}>{daysRemaining}</span>
-                <span style={{ marginLeft: 8, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, fontSize: 14 }}>Days Remaining</span>
+                {daysRemaining > 0 ? (
+                  <>
+                    <span style={{ fontSize: 24, fontWeight: 800, color: "#1877f2" }}>{daysRemaining}</span>
+                    <span style={{ marginLeft: 8, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, fontSize: 14 }}>Days Remaining</span>
+                  </>
+                ) : (
+                   <span style={{ color: "#1877f2", fontWeight: 700 }}>Task is not available right now.</span>
+                )}
               </div>
             </div>
           )}

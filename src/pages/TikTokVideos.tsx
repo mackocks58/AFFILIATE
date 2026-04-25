@@ -12,30 +12,43 @@ const VIDEOS = [
 ];
 
 export default function TikTokVideos() {
-  const { user, userData, loading } = useAuth();
+  const { user, userData, loading, exchangeRates } = useAuth();
   const [activeVideo, setActiveVideo] = useState<{id: string, title: string} | null>(null);
   const [timeLeft, setTimeLeft] = useState(60);
   const [busy, setBusy] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
   const [message, setMessage] = useState({ type: "", text: "" });
+  const [taskConfig, setTaskConfig] = useState<{ allowedDays: number[], baseReward: number } | null>(null);
+
+  useEffect(() => {
+    get(ref(db, "settings/tasks/tiktok")).then(snap => {
+      if (snap.exists()) setTaskConfig(snap.val());
+      else setTaskConfig({ allowedDays: [2], baseReward: 800 });
+    });
+  }, []);
 
   const DAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const dayOfWeek = new Date().getDay();
-  const targetDay = 1; // 1 = Monday
-  const isAvailable = dayOfWeek === targetDay;
+  const allowedDays = taskConfig?.allowedDays || [2];
+  const isAvailable = allowedDays.includes(dayOfWeek);
   const currentDayName = DAYS[dayOfWeek];
 
   const country = userData?.country || "Tanzania";
   const currency = country === "Zambia" ? "ZMW" : country === "Burundi" ? "BIF" : country === "Mozambique" ? "MZN" : country === "Congo" ? "CDF" : "TZS";
-  const rate = country === "Zambia" ? 0.0105 : country === "Burundi" ? 1.15 : country === "Mozambique" ? (400/15000) : 1;
-  const rewardAmount = Number((1000 * rate).toFixed(2));
+  const rate = exchangeRates[country] || 1;
+  const rewardAmount = Number(((taskConfig?.baseReward || 800) * rate).toFixed(2));
   
-  const getDaysUntil = (target: number) => {
-    let diff = target - dayOfWeek;
-    if (diff <= 0) diff += 7;
-    return diff;
+  const getDaysUntil = () => {
+    if (allowedDays.length === 0) return -1;
+    let minDiff = 7;
+    for (const target of allowedDays) {
+      let diff = target - dayOfWeek;
+      if (diff <= 0) diff += 7;
+      if (diff < minDiff) minDiff = diff;
+    }
+    return minDiff;
   };
-  const daysRemaining = getDaysUntil(targetDay);
+  const daysRemaining = getDaysUntil();
 
   useEffect(() => {
     let timer: any;
@@ -108,7 +121,7 @@ export default function TikTokVideos() {
 
   return (
     <Shell>
-      {loading || !userData ? (
+      {loading || !userData || !taskConfig ? (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "50vh" }}>
           <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 40, color: "var(--accent)" }}></i>
         </div>
@@ -130,11 +143,17 @@ export default function TikTokVideos() {
           {!isAvailable && (
             <div className="card" style={{ padding: 32, textAlign: "center", border: "1px solid rgba(0, 242, 254, 0.3)", background: "rgba(0,242,254,0.05)" }}>
               <i className="fa-brands fa-tiktok" style={{ fontSize: 48, color: "#00f2fe", marginBottom: 16 }}></i>
-              <h2>Available on Mondays Only</h2>
+              <h2>Available on {allowedDays.map(d => DAYS[d]).join(", ")}</h2>
               <p className="muted" style={{ fontSize: 16 }}>Today is <strong>{currentDayName}</strong>.</p>
               <div style={{ marginTop: 16, display: "inline-block", background: "rgba(0,242,254,0.1)", padding: "12px 24px", borderRadius: 12, border: "1px solid rgba(0,242,254,0.2)" }}>
-                <span style={{ fontSize: 24, fontWeight: 800, color: "#00f2fe" }}>{daysRemaining}</span>
-                <span style={{ marginLeft: 8, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, fontSize: 14 }}>Days Remaining</span>
+                {daysRemaining > 0 ? (
+                  <>
+                    <span style={{ fontSize: 24, fontWeight: 800, color: "#00f2fe" }}>{daysRemaining}</span>
+                    <span style={{ marginLeft: 8, color: "var(--muted)", textTransform: "uppercase", letterSpacing: 1, fontSize: 14 }}>Days Remaining</span>
+                  </>
+                ) : (
+                   <span style={{ color: "#00f2fe", fontWeight: 700 }}>Task is not available right now.</span>
+                )}
               </div>
             </div>
           )}

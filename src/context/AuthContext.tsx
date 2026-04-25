@@ -17,6 +17,7 @@ type AuthState = {
   loading: boolean;
   isAdmin: boolean;
   userData: any | null;
+  exchangeRates: Record<string, number>;
   refreshClaims: () => Promise<void>;
   logout: () => Promise<void>;
 };
@@ -28,6 +29,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
   const [userData, setUserData] = useState<any | null>(null);
+  const [exchangeRates, setExchangeRates] = useState<Record<string, number>>({});
 
   const refreshClaims = useCallback(async () => {
     const u = auth.currentUser;
@@ -41,6 +43,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let unsubDb: (() => void) | undefined;
+    let unsubRates: (() => void) | undefined;
+    
+    // Always listen to exchange rates globally
+    const ratesRef = ref(db, "settings/exchangeRates");
+    unsubRates = onValue(ratesRef, (snap) => {
+      if (snap.exists()) {
+        setExchangeRates(snap.val());
+      } else {
+        // Fallback default rates if DB is empty
+        setExchangeRates({
+          Tanzania: 1,
+          Zambia: 0.0105,
+          Burundi: 1.15,
+          Mozambique: 0.02666,
+          Congo: 1
+        });
+      }
+    });
+
     const unsubAuth = onAuthStateChanged(auth, async (u) => {
       setUser(u);
       if (u) {
@@ -62,6 +83,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       unsubAuth();
       if (unsubDb) unsubDb();
+      if (unsubRates) unsubRates();
     };
   }, []);
 
@@ -70,8 +92,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, loading, isAdmin, userData, refreshClaims, logout }),
-    [user, loading, isAdmin, userData, refreshClaims, logout]
+    () => ({ user, loading, isAdmin, userData, exchangeRates, refreshClaims, logout }),
+    [user, loading, isAdmin, userData, exchangeRates, refreshClaims, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
