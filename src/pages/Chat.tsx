@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { onValue, push, ref, set, get, query, orderByChild, equalTo } from "firebase/database";
+import { onValue, push, ref, set, get, query, orderByChild, equalTo, runTransaction } from "firebase/database";
 import { db } from "@/firebase";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/context/AuthContext";
@@ -8,6 +8,7 @@ import { useAuth } from "@/context/AuthContext";
 type ChatChannel = {
   id: string;
   name: string;
+  country?: string;
   isUpliner?: boolean;
   isDownliner?: boolean;
 };
@@ -26,6 +27,18 @@ type ChatMessage = {
   };
 };
 
+const getCountryCode = (country: string | undefined) => {
+  if (!country) return "tz";
+  const map: Record<string, string> = {
+    "Tanzania": "tz",
+    "Zambia": "zm",
+    "Burundi": "bi",
+    "Mozambique": "mz",
+    "Congo": "cd"
+  };
+  return map[country] || "tz";
+};
+
 export default function Chat() {
   const { user, userData } = useAuth();
   
@@ -39,6 +52,22 @@ export default function Chat() {
   const [busy, setBusy] = useState(false);
   const [replyTo, setReplyTo] = useState<ChatMessage["replyTo"] | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
+
+  // Subscribe to unread counts
+  useEffect(() => {
+    if (!user) return;
+    const r = ref(db, `userUnread/${user.uid}`);
+    return onValue(r, (snap) => {
+      setUnreadCounts(snap.val() || {});
+    });
+  }, [user]);
+
+  // Reset unread count when opening a channel
+  useEffect(() => {
+    if (!user || !activeChannelId) return;
+    set(ref(db, `userUnread/${user.uid}/${activeChannelId}`), 0);
+  }, [user, activeChannelId, messages]);
 
   // Load Upliner and Downliners as Channels
   useEffect(() => {
@@ -62,6 +91,7 @@ export default function Chat() {
             newChannels.push({
               id: chatId,
               name: uData.displayName || uData.username || "Upliner",
+              country: uData.country,
               isUpliner: true
             });
           }
@@ -83,6 +113,7 @@ export default function Chat() {
               newChannels.push({
                 id: chatId,
                 name: dData.displayName || dData.username || "Downliner",
+                country: dData.country,
                 isDownliner: true
               });
             });
@@ -160,6 +191,12 @@ export default function Chat() {
 
       await set(ref(db, `chatMessages/${activeChannelId}/${key}`), msgData);
 
+      const parts = activeChannelId.split("_");
+      const otherUid = parts[0] === user.uid ? parts[1] : parts[0];
+      if (otherUid) {
+        await runTransaction(ref(db, `userUnread/${otherUid}/${activeChannelId}`), (curr) => (curr || 0) + 1);
+      }
+
       setText("");
       setFile(null);
       setReplyTo(null);
@@ -236,12 +273,18 @@ export default function Chat() {
                       gap: "8px"
                     }}
                   >
+                    <img src={`https://flagcdn.com/w20/${getCountryCode(c.country)}.png`} alt="" style={{ width: 16, height: 12, borderRadius: 2 }} />
                     <span style={{ fontSize: 16 }}>{c.isUpliner ? "🤝" : "👤"}</span>
                     <div style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                         {c.name}
                         {c.isUpliner && <span style={{ display: "block", fontSize: 10, color: "var(--accent)" }}>Upliner</span>}
                         {c.isDownliner && <span style={{ display: "block", fontSize: 10, color: "var(--accent2)" }}>Downliner</span>}
                     </div>
+                    {!!unreadCounts[c.id] && (
+                      <div style={{ background: "var(--danger)", color: "#fff", fontSize: 10, fontWeight: 800, padding: "2px 6px", borderRadius: 10 }}>
+                        {unreadCounts[c.id]}
+                      </div>
+                    )}
                   </button>
                 ))}
               </div>

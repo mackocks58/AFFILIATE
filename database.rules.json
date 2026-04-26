@@ -110,6 +110,12 @@
         ".write": "auth != null && auth.uid === $uid"
       }
     },
+    "userUnread": {
+      "$uid": {
+        ".read": "auth != null && auth.uid === $uid",
+        ".write": "auth != null"
+      }
+    },
     "bundles": {
       ".read": true,
       ".write": "auth != null && auth.token.admin === true"
