@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
-import { onValue, push, ref, set, get, query, orderByChild, equalTo, runTransaction } from "firebase/database";
+import { onValue, push, ref, set, get, query, orderByChild, equalTo, increment } from "firebase/database";
 import { db } from "@/firebase";
 import { Shell } from "@/components/Shell";
 import { useAuth } from "@/context/AuthContext";
@@ -194,7 +194,7 @@ export default function Chat() {
       const parts = activeChannelId.split("_");
       const otherUid = parts[0] === user.uid ? parts[1] : parts[0];
       if (otherUid) {
-        await runTransaction(ref(db, `userUnread/${otherUid}/${activeChannelId}`), (curr) => (curr || 0) + 1);
+        await set(ref(db, `userUnread/${otherUid}/${activeChannelId}`), increment(1));
       }
 
       setText("");
