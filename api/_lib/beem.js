@@ -32,7 +32,7 @@ export async function sendSMS(phones, message) {
         "Authorization": authHeader
       },
       body: JSON.stringify({
-        source_addr: "EAGLE STAR",
+        source_addr: "HABILU CBR",
         schedule_time: "",
         encoding: 0,
         message: message,
