@@ -278,7 +278,7 @@ app.post("/api/auth/welcome-sms", async (req, res) => {
 
     const decoded = await admin.auth().verifyIdToken(idToken);
     
-    const message = `Welcome to EAGLE STAR, ${name || "User"}! Your account has been created. Get started today.`;
+    const message = `Welcome to EAGLE STAR, ${name || "User"}! Your account has been successfully created. Please activate your account to get full access to premium tips.`;
     const result = await sendSMS(phone, message);
     
     if (result && result.success) {

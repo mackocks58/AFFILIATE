@@ -6,15 +6,18 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
   const uid = session.uid;
 
   try {
-    // Fetch user details to get the phone number
+    // Fetch user details to get the phone number and name
     let userPhone = null;
+    let userName = "User";
     try {
       const uSnap = await db.ref(`users/${uid}`).get();
       if (uSnap.exists()) {
-        userPhone = uSnap.val().phone;
+        const uVal = uSnap.val();
+        userPhone = uVal.phone;
+        userName = uVal.username || uVal.displayName || "User";
       }
     } catch (e) {
-      console.error("Error fetching user phone for SMS:", e);
+      console.error("Error fetching user details for SMS:", e);
     }
 
     if (session.betslipId) {
@@ -27,7 +30,7 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
       });
       console.log(`Purchase completed for user ${uid}, betslip ${session.betslipId}`);
       if (userPhone) {
-        await sendSMS(userPhone, `Your payment for betslip ${session.betslipId} was successful! Ref: ${reference || actualOrderId}`);
+        await sendSMS(userPhone, `Hello ${userName}, your payment of ${session.amount} for Betslip ${session.title || session.betslipId} was successful! Ref: ${reference || actualOrderId}. Thank you!`);
       }
       return true;
     } else if (session.movieGroupId) {
@@ -40,7 +43,7 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
       });
       console.log(`Purchase completed for user ${uid}, movie group ${session.movieGroupId}`);
       if (userPhone) {
-        await sendSMS(userPhone, `Your payment for movie group was successful! Ref: ${reference || actualOrderId}`);
+        await sendSMS(userPhone, `Hello ${userName}, your payment of ${session.amount} for Movie Group access was successful! Ref: ${reference || actualOrderId}. Enjoy watching!`);
       }
       return true;
     } else if (session.bundleId) {
@@ -53,7 +56,7 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
       });
       console.log(`Purchase completed for user ${uid}, bundle ${session.bundleId}`);
       if (userPhone) {
-        await sendSMS(userPhone, `Your bundle payment was successful! Ref: ${reference || actualOrderId}`);
+        await sendSMS(userPhone, `Hello ${userName}, your bundle payment of ${session.amount} was successful! Ref: ${reference || actualOrderId}. Thank you!`);
       }
       return true;
     } else if (session.activationPayment) {
@@ -65,7 +68,7 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
       });
       console.log(`User ${uid} successfully activated.`);
       if (userPhone) {
-        await sendSMS(userPhone, `Your account activation payment was successful! Ref: ${reference || actualOrderId}`);
+        await sendSMS(userPhone, `Hello ${userName}, your account activation payment of ${session.amount} was successful! Ref: ${reference || actualOrderId}. You are now an active member of EAGLE STAR.`);
       }
 
       // Distribute commissions
