@@ -284,7 +284,10 @@ app.post("/api/auth/welcome-sms", async (req, res) => {
     if (result && result.success) {
       res.json({ success: true });
     } else {
-      res.status(500).json({ error: "Failed to send SMS" });
+      res.status(500).json({ 
+        error: "Failed to send SMS", 
+        details: result ? (result.error || result.data || result.message) : "Unknown error" 
+      });
     }
   } catch (error) {
     console.error("Welcome SMS error:", error);
