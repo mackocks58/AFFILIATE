@@ -17,6 +17,7 @@ import { AdminWithdrawals } from "./AdminWithdrawals";
 import { AdminTasksConfig } from "./AdminTasksConfig";
 import { AdminRatesConfig } from "./AdminRatesConfig";
 import { AdminBundle } from "./AdminBundle";
+import { AdminSMS } from "./AdminSMS";
 
 type Row = Betslip & { id: string };
 
@@ -197,7 +198,7 @@ export default function Admin() {
     );
   }
 
-  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments" | "withdrawals" | "tasks" | "withdraw_config" | "rates" | "bundle">("betslips");
+  const [tab, setTab] = useState<"betslips" | "matches" | "notifications" | "movies" | "manual_payments" | "withdrawals" | "tasks" | "withdraw_config" | "rates" | "bundle" | "sms">("betslips");
 
   return (
     <Shell>
@@ -215,6 +216,9 @@ export default function Admin() {
           </button>
           <button className={`btn ${tab === "notifications" ? "" : "btn-ghost"}`} onClick={() => setTab("notifications")}>
             Notifications
+          </button>
+          <button className={`btn ${tab === "sms" ? "" : "btn-ghost"}`} onClick={() => setTab("sms")}>
+            SMS Bulk
           </button>
           <button className={`btn ${tab === "manual_payments" ? "" : "btn-ghost"}`} onClick={() => setTab("manual_payments")}>
             Payments
@@ -342,6 +346,8 @@ export default function Admin() {
         <AdminRatesConfig />
       ) : tab === "bundle" ? (
         <AdminBundle />
+      ) : tab === "sms" ? (
+        <AdminSMS />
       ) : (
         <AdminNotifications />
       )}

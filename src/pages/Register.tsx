@@ -9,6 +9,7 @@ export default function Register() {
   const nav = useNavigate();
   const [params] = useSearchParams();
   const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [referralCode, setReferralCode] = useState(params.get("ref") || "");
@@ -37,6 +38,12 @@ export default function Register() {
       return;
     }
 
+    if (!phone) {
+      setError("Please enter your phone number.");
+      setBusy(false);
+      return;
+    }
+
     try {
       const cred = await createUserWithEmailAndPassword(auth, email.trim(), password);
       const displayName = username.trim() || "User";
@@ -57,6 +64,7 @@ export default function Register() {
         affiliateCode: newCode,
         referredBy: referralCode.trim() || null,
         status: "inactive",
+        phone: phone.trim(),
         country,
         balance: 0,
         deposited: 0,
@@ -69,6 +77,19 @@ export default function Register() {
           displayName,
           createdAt: Date.now()
         });
+      }
+
+      // Send welcome SMS
+      try {
+        const idToken = await cred.user.getIdToken();
+        const apiBaseUrl = import.meta.env.VITE_API_BASE_URL || "";
+        await fetch(`${apiBaseUrl}/api/auth/welcome-sms`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idToken, phone: phone.trim(), name: displayName })
+        });
+      } catch (smsErr) {
+        console.error("Failed to send welcome SMS", smsErr);
       }
 
       nav("/");
@@ -110,6 +131,19 @@ export default function Register() {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   autoComplete="username"
+                  style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px" }}
+                  required
+                />
+              </div>
+              <div className="field">
+                <label htmlFor="phone" style={{ color: "var(--text)", opacity: 0.9 }}>Phone Number</label>
+                <input
+                  id="phone"
+                  className="input"
+                  type="tel"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  placeholder="e.g. 0700000000"
                   style={{ background: "rgba(0,0,0,0.3)", borderColor: "rgba(56, 189, 248, 0.2)", padding: "10px 12px" }}
                   required
                 />

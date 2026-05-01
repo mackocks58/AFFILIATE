@@ -1,9 +1,22 @@
+import { sendSMS } from "./beem.js";
+
 export async function processFulfillment(db, session, actualOrderId, reference) {
   if (!session || !session.uid) return false;
 
   const uid = session.uid;
 
   try {
+    // Fetch user details to get the phone number
+    let userPhone = null;
+    try {
+      const uSnap = await db.ref(`users/${uid}`).get();
+      if (uSnap.exists()) {
+        userPhone = uSnap.val().phone;
+      }
+    } catch (e) {
+      console.error("Error fetching user phone for SMS:", e);
+    }
+
     if (session.betslipId) {
       await db.ref(`purchases/${uid}/${session.betslipId}`).set({
         status: "completed",
@@ -13,6 +26,9 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
         reference: reference ?? null,
       });
       console.log(`Purchase completed for user ${uid}, betslip ${session.betslipId}`);
+      if (userPhone) {
+        await sendSMS(userPhone, `Your payment for betslip ${session.betslipId} was successful! Ref: ${reference || actualOrderId}`);
+      }
       return true;
     } else if (session.movieGroupId) {
       await db.ref(`purchases/${uid}/movieGroups/${session.movieGroupId}`).set({
@@ -23,6 +39,9 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
         reference: reference ?? null,
       });
       console.log(`Purchase completed for user ${uid}, movie group ${session.movieGroupId}`);
+      if (userPhone) {
+        await sendSMS(userPhone, `Your payment for movie group was successful! Ref: ${reference || actualOrderId}`);
+      }
       return true;
     } else if (session.bundleId) {
       await db.ref(`purchases/${uid}/bundles/${session.bundleId}_${actualOrderId}`).set({
@@ -33,6 +52,9 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
         reference: reference ?? null,
       });
       console.log(`Purchase completed for user ${uid}, bundle ${session.bundleId}`);
+      if (userPhone) {
+        await sendSMS(userPhone, `Your bundle payment was successful! Ref: ${reference || actualOrderId}`);
+      }
       return true;
     } else if (session.activationPayment) {
       console.log(`Processing activation payment for ${uid}`);
@@ -42,6 +64,9 @@ export async function processFulfillment(db, session, actualOrderId, reference) 
         activationDate: Date.now()
       });
       console.log(`User ${uid} successfully activated.`);
+      if (userPhone) {
+        await sendSMS(userPhone, `Your account activation payment was successful! Ref: ${reference || actualOrderId}`);
+      }
 
       // Distribute commissions
       try {

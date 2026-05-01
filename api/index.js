@@ -4,6 +4,7 @@ import cors from "cors";
 import { getAdmin } from "./_lib/firebaseAdmin.js";
 import { createPalmpesaOrder, extractPalmpesaUrl, isPalmpesaSuccess, checkPalmpesaStatus } from "./_lib/palmpesa.js";
 import { processFulfillment } from "./_lib/fulfillment.js";
+import { sendSMS } from "./_lib/beem.js";
 import crypto from "crypto";
 import helmet from "helmet";
 import rateLimit from "express-rate-limit";
@@ -268,6 +269,95 @@ app.get("/api/auth/resolve-username/:username", async (req, res) => {
     res.status(500).json({ error: e.message });
   }
 });
+
+app.post("/api/auth/welcome-sms", async (req, res) => {
+  try {
+    const admin = getAdmin();
+    const { idToken, phone, name } = req.body;
+    if (!idToken || !phone) return res.status(400).json({ error: "Missing parameters" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    
+    const message = `Welcome to EAGLE STAR, ${name || "User"}! Your account has been created. Get started today.`;
+    const result = await sendSMS(phone, message);
+    
+    if (result && result.success) {
+      res.json({ success: true });
+    } else {
+      res.status(500).json({ error: "Failed to send SMS" });
+    }
+  } catch (error) {
+    console.error("Welcome SMS error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/admin/send-bulk-sms", async (req, res) => {
+  try {
+    const admin = getAdmin();
+    const { idToken, message, target, customPhones } = req.body;
+    if (!idToken || !message) return res.status(400).json({ error: "Missing parameters" });
+
+    const decoded = await admin.auth().verifyIdToken(idToken);
+    const db = admin.database();
+    
+    const userSnap = await db.ref(`users/${decoded.uid}`).get();
+    if (!userSnap.exists() || userSnap.val().isAdmin !== true) {
+      if (!decoded.admin) {
+        return res.status(403).json({ error: "Not authorized" });
+      }
+    }
+
+    let phones = [];
+    if (target === "tanzania") {
+      const snap = await db.ref('users').orderByChild('country').equalTo('Tanzania').once('value');
+      if (snap.exists()) {
+        const users = snap.val();
+        phones = Object.values(users)
+          .map(u => u.phone)
+          .filter(p => p && p.trim().length > 6);
+      }
+    } else if (target === "custom") {
+      phones = (customPhones || "")
+        .split(',')
+        .map(p => p.trim())
+        .filter(p => p.length > 6);
+    }
+
+    if (phones.length === 0) {
+      return res.status(400).json({ error: "No valid phone numbers found to send." });
+    }
+
+    const result = await sendSMS(phones, message);
+    
+    // Log the campaign
+    const campaignId = `camp_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+    await db.ref(`smsCampaigns/${campaignId}`).set({
+      createdAt: Date.now(),
+      createdBy: decoded.uid,
+      message,
+      target,
+      totalTargets: phones.length,
+      success: result.success,
+      submittedCount: result.submitted || 0,
+      failedCount: phones.length - (result.submitted || 0),
+      apiResponse: result.data || null,
+      error: result.error || null
+    });
+
+    res.json({
+      success: result.success,
+      totalFound: phones.length,
+      submitted: result.submitted || 0,
+      failed: phones.length - (result.submitted || 0)
+    });
+
+  } catch (error) {
+    console.error("Bulk SMS error:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 
 app.get("/api/checkout/status/:orderId", async (req, res) => {
